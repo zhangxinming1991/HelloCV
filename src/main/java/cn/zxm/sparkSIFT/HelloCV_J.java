@@ -52,28 +52,31 @@ public class HelloCV_J {
         }
     }
 
+    public static final int pics_size = 8;
+
     public static void main(String[] args) throws IOException {
 
         SparkConf sparkConf = new SparkConf().setAppName("HelloCV_J");
         final JavaSparkContext ctx = new JavaSparkContext(sparkConf);
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
 
-    /*    String getPicMat = "/home/simon/Public/Opencv/GetPicMat/build-getPicMat-Desktop-Debug/getPicMat ";
+        String getPicMat = "/home/simon/Public/Opencv/GetPicMat/build-getPicMat-Desktop-Debug/getPicMat ";
         List<String> filename = new ArrayList<String>();
-        filename.add("car4.jpg");
-        filename.add("car5.jpg");
+        for (int i = 0; i < pics_size; i++) {
+            filename.add("car" + (i+1) + ".jpg");
+        }
 
-        List<Wight_Hight> wh = ctx.parallelize(filename,2).pipe(getPicMat).map(new Function<String,Wight_Hight>(){
+        List<Wight_Hight> wh = ctx.parallelize(filename,filename.size()).pipe(getPicMat).map(new Function<String,Wight_Hight>(){
             public Wight_Hight call(String arg0) throws Exception{
                 String []row_col = arg0.split(" ");
                 return new Wight_Hight(Integer.parseInt(row_col[0]),Integer.parseInt(row_col[1]));
             }
-        }).collect();//the getPicMat run two times,why*/
+        }).collect();//the getPicMat run two times,why
 
         /*Debug mode*/
-        List<Wight_Hight> wh = new ArrayList<Wight_Hight>(2);
+    /*    List<Wight_Hight> wh = new ArrayList<Wight_Hight>(2);
         wh.add(new Wight_Hight(675,1000));
-        wh.add(new Wight_Hight(640,1024));
+        wh.add(new Wight_Hight(640,1024));*/
         /*Debug mode*/
 
         Mat[] row_cols = new Mat[wh.size()];//can Mat seriable
@@ -150,7 +153,7 @@ public class HelloCV_J {
         /* feature extract & extract*/
 
         /*show picture*/
-        Imgproc.resize(row_cols[0],row_cols[0],new Size(640,480));
+    /*    Imgproc.resize(row_cols[0],row_cols[0],new Size(640,480));
         MatOfByte matOfByte = new MatOfByte();
         Highgui.imencode(".jpg",row_cols[0],matOfByte);
         byte[] byteArray= matOfByte.toArray();
@@ -172,7 +175,21 @@ public class HelloCV_J {
         JFrame frame_1 = new JFrame();
         frame_1.getContentPane().add(new JLabel(new ImageIcon(bufImage)));
         frame_1.pack();
-        frame_1.setVisible(true);
+        frame_1.setVisible(true);*/
+
+        for (int i = 0; i < filename.size(); i++) {
+            Imgproc.resize(row_cols[i],row_cols[i],new Size(640,480));
+            MatOfByte matOfByte = new MatOfByte();
+            Highgui.imencode(".jpg",row_cols[i],matOfByte);
+            byte[] byteArray= matOfByte.toArray();
+
+            InputStream in = new ByteArrayInputStream(byteArray);
+            BufferedImage bufImage = ImageIO.read(in);
+            JFrame frame = new JFrame();
+            frame.getContentPane().add(new JLabel(new ImageIcon(bufImage)));
+            frame.pack();
+            frame.setVisible(true);
+        }
         /*show picture*/
 
     /*    List<Double> list = new ArrayList<Double>();
