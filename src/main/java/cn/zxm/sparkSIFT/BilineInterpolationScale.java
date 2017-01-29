@@ -57,11 +57,52 @@ public class BilineInterpolationScale {
     }
 
     public Double[] imgScale_d(Double []inPixelsData,int srcW, int srcH, int destW, int destH){
-       return null;
+        System.out.println(inPixelsData.length);
+        Double[][] input3DData = processOneToTwoDeminsion(inPixelsData,srcH,srcW);
+        Double[][] outputThreeDeminsionData = new Double[destH][destW];
+        float rowRatio = ((float)srcH) / ((float)destH);
+        float colRatio = ((float)srcW) / ((float)destW);
+
+        for(int row = 0; row < destH; row++) {
+
+            double srcRow = ((float)row) * rowRatio;
+            double j = Math.floor(srcRow);
+            double t = srcRow - j;
+
+            for(int col = 0; col < destW; col++) {
+
+                double srcCol = ((float)col) * colRatio;
+                double k = Math.floor(srcCol);
+                double u = srcCol - k;
+
+                double coffiecent1 = (1.0d - t) * (1.0d - u);
+                double coffiecent2 = (t) * (1.0d - u);
+                double coffiecent3 = t * u;
+                double coffiecent4 = (1.0d - t) * u;
+
+                outputThreeDeminsionData[row][col] = (
+                            coffiecent1 * input3DData[getClip((int)j, srcH - 1, 0)][getClip((int)k, srcW - 1, 0)] +
+                                    coffiecent2 * input3DData[getClip((int)(j + 1), srcH - 1, 0)][getClip((int)k, srcW - 1, 0)] +
+                                    coffiecent3 * input3DData[getClip((int)(j + 1), srcH - 1, 0)][getClip((int)(k + 1),srcW - 1, 0)] +
+                                    coffiecent4 * input3DData[getClip((int)j, srcH - 1, 0)][getClip((int)(k + 1), srcW - 1, 0)]
+                    );
+
+                }
+        }
+        return convertToOneDim_d(outputThreeDeminsionData,destW,destH);
     }
 
     public Double[][] processOneToTwoDeminsion(Double []inPixelsData,int imgRows, int imgCols){
-        return null;
+        Double[][] tempData = new Double[imgRows][imgCols];
+        System.out.println(imgRows + ":" + imgCols);
+        for(int row=0; row<imgRows; row++) {
+
+            for (int col = 0; col < imgCols; col++) {
+                int element = row * imgCols + col;
+                tempData[row][col] = inPixelsData[element];
+            }
+        }
+        return tempData;
     }
 
     private int getClip(int x, int max, int min) {
@@ -79,6 +120,20 @@ public class BilineInterpolationScale {
                                 | ((data[row][col][1] << 16) & 0x00FF0000)
                                 | ((data[row][col][2] << 8) & 0x0000FF00)
                                 | ((data[row][col][3]) & 0x000000FF);
+
+                cnt++;
+            }
+        }
+        return oneDPix;
+    }
+
+    public Double[] convertToOneDim_d(Double[][] data, int imgCols, int imgRows) {
+        Double[] oneDPix = new Double[imgCols * imgRows];
+
+        for (int row = 0, cnt = 0; row < imgRows; row++) {
+            for (int col = 0; col < imgCols; col++) {
+
+                oneDPix[cnt] = data[row][col];
 
                 cnt++;
             }

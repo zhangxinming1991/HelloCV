@@ -2,14 +2,10 @@ package cn.zxm.sparkSIFT;
 
 import org.apache.commons.math3.analysis.function.Min;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaDoubleRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.util.SystemClock;
-import scala.collection.immutable.Range;
-
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -56,7 +52,7 @@ public class BuildGaussPry {
         public void CreateDData(int w,int h,Double []ddata){
             if (ddata.length != w*h)
             {
-                System.out.println("the length of data is wrong!");
+    //            System.out.println("the length of data is wrong!");
                 return;
             }
             this.cols = w;
@@ -139,10 +135,10 @@ public class BuildGaussPry {
         Double sum = 0.0;
         for (int i = 0; i < gaussfilter.length; i++) {
             sum = sum + gaussfilter[i];}
-        System.out.println("sum:" + sum);
+    //    System.out.println("sum:" + sum);
         if (sum.equals(1.0)) return;
         else {
-            System.out.println("sum<1");
+    //        System.out.println("sum<1");
             for (int i = 0;i<gaussfilter.length;i++){
                 gaussfilter[i] = gaussfilter[i]/sum;
             }
@@ -168,10 +164,10 @@ public class BuildGaussPry {
         Double sum = 0.0;
         for (int i = 0; i < size; i++) {
             sum = sum + gaussfilter[i];}
-        System.out.println("sum:" + sum);
+    //    System.out.println("sum:" + sum);
         if (sum.equals(1.0)) return;
         else {
-            System.out.println("sum<1");
+        //    System.out.println("sum<1");
             for (int i = 0;i<size;i++){
                 gaussfilter[i] = gaussfilter[i]/sum;
         //        System.out.println(gaussfilter[i]);
@@ -204,7 +200,9 @@ public class BuildGaussPry {
                 //gimg.setRGB(i,j,colorToRGB(255,gray,gray,gray));
                 gimg.ddate[i*(bimg.getWidth())+j] = gray/255.0;
 
-                gimg.data[i*(bimg.getWidth())+j] = (int) Math.round(Double.valueOf(gray));
+                int gray_i = (int) Math.round(Double.valueOf(gray));
+                gimg.data[i*(bimg.getWidth())+j] = colorToRGB((byte) 255,gray_i,gray_i,gray_i);
+                //gimg.data[i*(bimg.getWidth())+j] = (int) Math.round(Double.valueOf(gray));
 
             }
          //   System.out.println();
@@ -304,7 +302,8 @@ public class BuildGaussPry {
                     int inx_k = inx + img_src.cols*k_edge;
                     r += temp_r[inx_k]*gaussfilter[n];
                 }
-
+                if (r > 1.0)
+                    r = 1.0;
                 ddata[inx] = r;
                 data[inx] = (int) Math.round(Clamp(r*255));
                 //img_dst.data[inx] = Double.valueOf(r).intValue();
@@ -315,7 +314,6 @@ public class BuildGaussPry {
         img_dst.CreateDData(img_src.cols,img_src.rows,ddata);
     }
 
-
     public static void Subtract_Gray(My_Mat minuend,My_Mat subtrahend,My_Mat result){
 
         short p = 0;
@@ -324,16 +322,14 @@ public class BuildGaussPry {
         Integer color[] = new Integer[minuend.rows * minuend.cols];
         for (int r = 0; r < minuend.rows; r++) {
             for (int c = 0; c < minuend.cols; c++) {
-                short gray1 = minuend.GetBlue(r,c);
-                short gray2 = subtrahend.GetBlue(r,c);
+               // short gray1 = minuend.GetBlue(r,c);
+               // short gray2 = subtrahend.GetBlue(r,c);
 
                 Double gray1_d = minuend.ddate[r*minuend.cols + c];
                 Double gray2_d = subtrahend.ddate[r*minuend.cols + c];
                 //p = (short) Math.abs(gray1 - gray2);
                 p_d = gray1_d - gray2_d;
-                if (r == 0){
-                    System.out.print(p + " ");
-                }
+
                 if (p_d < 0)
                     p = 0;
                 else
@@ -345,8 +341,8 @@ public class BuildGaussPry {
             //System.out.println();
         }
 
-        System.out.println(result);
-        System.out.println(minuend.cols*minuend.rows + ":" + color.length);
+    //    System.out.println(result);
+    //    System.out.println(minuend.cols*minuend.rows + ":" + color.length);
         result.CreateData(minuend.cols,minuend.rows,color);
         result.CreateDData(minuend.cols,minuend.rows,color_d);
     }
@@ -370,24 +366,36 @@ public class BuildGaussPry {
                 else if(i == 0){
                     int w = img_mat[(o-1)*(intvls+3)+intvls].cols;
                     int h = img_mat[(o-1)*(intvls+3)+intvls].rows;
-                    Integer[] src = img_mat[(o-1)*(intvls+3)+intvls].data;
+                    Double[] src = img_mat[(o-1)*(intvls+3)+intvls].ddate;
+
+                    Integer[] srcI = img_mat[(o-1)*(intvls+3)+intvls].data;
+
                     BilineInterpolationScale bps = new BilineInterpolationScale();
+                    BiCubicInterpolationScale cps = new BiCubicInterpolationScale();
                     /*dst.data = bps.imgScale(src,w,h,w/2,h/2);
                     dst.rows = h/2;
                     dst.cols = w/2;*/
-                    Integer []resize_data = bps.imgScale(src,w,h,w/2,h/2);
-                    dst.CreateData(w/2,h/2,resize_data);
+                    //Integer []resize_data = bps.imgScale(src,w,h,w/2,h/2);
+                    //dst.CreateData(w/2,h/2,resize_data);
 
-                    Double []resized_ddate = new Double[(w/2) * (h/2)];
+                //    Double []resized_ddate = new Double[(w/2) * (h/2)];
+                    Double [] resized_ddate = bps.imgScale_d(src,w,h,w/2,h/2);
+
+                /*    Integer[] resized_data = cps.imgScale(srcI,w,h,w/2,h/2);
                     for (int j = 0; j < (w/2) * (h/2); j++) {
-                        resized_ddate[j] = resize_data[j]/255.0;
-                    }
+                        resized_ddate[j] = resized_data[j]/255.0;
+                    }*/
+                    //dst.CreateDData(w/2,h/2,resized_ddate);
+                    /*Double[] resized_ddate = new Double[(w/2) * (h/2)];
+                    for (int j = 0; j < (w/2)*(h/2); j++) {
+                        resized_ddate[j] = resized_data[j]/255.0;
+                    }*/
                     dst.CreateDData(w/2,h/2,resized_ddate);
                 }
                 else{
                     Double []gaussfilter1D = new Double[(2*radius + 1)];
                     CreateGaussFilter1D(radius,sig[i],gaussfilter1D);
-                    System.out.println(o*(intvls + 3) + i-1);
+        //            System.out.println(o*(intvls + 3) + i-1);
                     My_Mat src = img_mat[o*(intvls + 3) + i-1];
                //     Blur1D(src,dst,gaussfilter1D,radius);
                     Blur1D_d(src,dst,gaussfilter1D,radius);
@@ -397,7 +405,7 @@ public class BuildGaussPry {
     }
 
     public static void CreateDogGaussinPry(My_Mat []gaussian,My_Mat []doggaussian,int intvls,int nOctaves) throws IOException {
-        System.out.println("dog_len:" + doggaussian.length);
+    //    System.out.println("dog_len:" + doggaussian.length);
         for (int o = 0; o < nOctaves; o++) {
             for (int i = 0; i < intvls+2; i++) {
                 int one_dim_g = o*(intvls+3) + i;
@@ -427,7 +435,8 @@ public class BuildGaussPry {
 
     public static void ShowPic(JavaSparkContext ctx,My_Mat showimg,String titleName){
 
-        List<Integer> color_temp = GrayToColor(ctx,Arrays.asList(showimg.data));
+        //List<Integer> color_temp = GrayToColor(ctx,Arrays.asList(showimg.data));
+        List<Integer> color_temp = Arrays.asList(showimg.data);
         int []color = ChangeIntegerToInt_Array(color_temp.toArray(new Integer[color_temp.size()]));
         BufferedImage gray_temp = new BufferedImage(showimg.cols,showimg.rows,showimg.picType);
         gray_temp.setRGB(0,0,showimg.cols,showimg.rows,color,0,showimg.cols);
@@ -504,20 +513,37 @@ public class BuildGaussPry {
         return sigma.toArray(new Double[intvls+3]);
     }
 
-    public static void CreateInitImg(My_Mat srcImg,Double sigma,int radius) throws IOException {
+    public static void CreateInitImg(JavaSparkContext ctx,My_Mat srcImg,Double sigma,int radius) throws IOException {
+        SavePicPixel("init_imgmes/scale_before.txt",srcImg,"FLOAT");
         BilineInterpolationScale bps = new BilineInterpolationScale();
-        srcImg.data = bps.imgScale(srcImg.data,srcImg.cols,srcImg.rows,srcImg.cols*2,srcImg.rows*2);
-        srcImg.rows = srcImg.rows*2;
-        srcImg.cols = srcImg.cols*2;
 
-        Double[] ddata = new Double[srcImg.rows*srcImg.cols];
+        BiCubicInterpolationScale cps = new BiCubicInterpolationScale();
+
+        int re_r = srcImg.rows*2;
+        int re_c = srcImg.cols*2;
+        srcImg.data = cps.imgScale(srcImg.data,srcImg.cols,srcImg.rows,re_c,re_r);
+        //srcImg.ddate = bps.imgScale_d(srcImg.ddate,srcImg.cols,srcImg.rows,srcImg.cols*2,srcImg.rows*2);
+        srcImg.rows = re_r;
+        srcImg.cols = re_c;
+        //Integer []data = new Integer[srcImg.rows*srcImg.cols];
+        Double []ddata = new Double[srcImg.rows*srcImg.cols];
+
+        for (int i = 0; i < srcImg.rows*srcImg.cols; i++) {
+            //data[i] = (int) Math.round(srcImg.ddate[i]*255);
+            ddata[i] = (srcImg.data[i] & 0x000000ff) / 255.0;
+        }
+
+        //srcImg.data = data;
+        srcImg.ddate = ddata;
+        SavePicPixel("init_imgmes/smooth_before.txt",srcImg,"FLOAT");
+        ShowPic(ctx,srcImg,"2_scale");
+    /*    Double[] ddata = new Double[srcImg.rows*srcImg.cols];
         for (int i = 0; i < srcImg.rows*srcImg.cols; i++) {
             ddata[i] = srcImg.data[i]/255.0;
-        }
-        srcImg.ddate = ddata;
+        }*/
 
         Double sig_diff = Math.sqrt( sigma * sigma - 0.5 * 0.5 * 4 );
-        System.out.println(sig_diff);
+    //    System.out.println(sig_diff);
         Double []gaussfilter1D = new Double[(2*radius + 1)];
         CreateGaussFilter1D(radius,sig_diff,gaussfilter1D);
      //   Blur1D(srcImg,srcImg,gaussfilter1D,radius);
@@ -551,6 +577,7 @@ public class BuildGaussPry {
                 outputStream.write("\n");
             }
         }
+        outputStream.close();
     }
 
     public static void SavedogPixel(String filename,My_Mat dog,My_Mat src1,My_Mat src2) throws IOException {
@@ -577,18 +604,18 @@ public class BuildGaussPry {
                 .set("spark.cores.max","4");
         final JavaSparkContext ctx = new JavaSparkContext(sparkConf);
 
-        int radius = 5;
+        int radius = 5;//高斯模糊半径
 
         BufferedImage bimg = ImageIO.read(new File("car2.jpg"));//原始图片
 
         Integer intvls = 3;
+
         Double nOctaves_d = Math.log( new Min().value(bimg.getWidth(), bimg.getHeight() ) ) / Math.log(2.0) - 2;
+        Integer nOctaves = nOctaves_d.intValue();
+        /*if ((nOctaves_d - nOctaves.doubleValue()) > 0.5)
+            nOctaves = nOctaves + 1;*/
 
-        Integer nOctaves = nOctaves_d.intValue() + 1;
-        if ((nOctaves_d - nOctaves.doubleValue()) > 0.5)
-            nOctaves = nOctaves + 1;
-
-        System.out.println("o:" + nOctaves_d + " " + "i:" + intvls);
+        System.out.println("o:" + nOctaves + " " + "i:" + intvls);
         My_Mat []img_pry = new My_Mat[nOctaves*(intvls+3)];//高斯塔
         My_Mat[] doggaussian = new My_Mat[nOctaves*(intvls+2)];//差分高斯塔
         for (int i = 0; i < img_pry.length; i++) {
@@ -604,7 +631,9 @@ public class BuildGaussPry {
         long startMili = System.currentTimeMillis();
         /*build gaussian pry*/
         Double[] sigma = CreateSigma(ctx,intvls);
-        CreateInitImg(img_pry[0],sigma[0],radius);//初始化高斯塔最底层的图片
+        CreateInitImg(ctx,img_pry[0],sigma[0],radius);//初始化高斯塔最底层的图片
+
+        SavePicPixel("init_imgmes/init_img.txt",img_pry[0],"FLOAT");//保存init_img
 
         CreateGaussinPry(img_pry,intvls,nOctaves,sigma,radius);//创建高斯塔
         CreateDogGaussinPry(img_pry,doggaussian,intvls,nOctaves);//创建差分高斯塔
@@ -629,11 +658,11 @@ public class BuildGaussPry {
         /*打印高斯塔*/
 
         /*打印差分高斯塔*/
-        for (int i = 0; i < doggaussian.length; i++) {
+    /*    for (int i = 0; i < doggaussian.length; i++) {
 
             String titleName = "o" + i/(intvls+2) + ":" + "i" + i%(intvls+2);
             ShowPic(ctx,doggaussian[i],titleName);
-        }
+        }*/
         /*打印差分高斯塔*/
 
         //SavePic(ctx,img_pry[0],"car2_gray.jpg");
@@ -641,5 +670,15 @@ public class BuildGaussPry {
     /*     Double []gaussfilter2D = new Double[(2*radius + 1)*(2*radius + 1)];
         CreateGaussFilter2D(radius,3.0,gaussfilter2D);
         Blur2D(img_pry,gaussfilter2D,radius);*/
+
+        double contr_thr = 0.04;
+        int curv_thr = 10;
+        ScaleSpaceExtrema sse = new ScaleSpaceExtrema();
+        Vector<ScaleSpaceExtrema.KeyPoint>vkeys = sse.findScaleSpaceExtrema(doggaussian,intvls,nOctaves,contr_thr,curv_thr);
+        System.out.println("keypoints:" + vkeys.size());
+
+        for (int i = 0; i < vkeys.size(); i++) {
+            System.out.println(vkeys.get(i).y + "," + vkeys.get(i).x);
+        }
     }
 }

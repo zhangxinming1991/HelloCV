@@ -25,17 +25,36 @@ public class ScaleSpaceExtrema {
         public int nOctave;
     }
 
+    /**
+     *
+     * @param dogaussianpry
+     * @param intvl
+     * @param nOctave
+     * @param row
+     * @param col
+     * @param intvls
+     * @return
+     */
     public boolean isExtrema(BuildGaussPry.My_Mat []dogaussianpry,int intvl,int nOctave,int row,int col,int intvls){
+        if (row == 37 && col == 119){
+            System.out.println(row + ":" + col);
+        }
         BuildGaussPry.My_Mat curScale= dogaussianpry[nOctave*(intvls+2) + intvl];
-        int val = curScale.GetBlue(row,col);
+        //int val = curScale.GetBlue(row,col);
+        int curOneDiem = row*curScale.GetCols() + col;
+        double val = curScale.ddate[curOneDiem];
 
         /* check for max*/
         if (val > 0){
             for (int i = -1; i <= 1 ; i++) {//intvl
                 for (int r = -1; r <= 1; r++) {//row
-                    for (int c = 1; c <= 1; c++) {
-                        BuildGaussPry.My_Mat compare = dogaussianpry[nOctave*(intvls+2)+i];
-                        if (val < compare.GetBlue(r,c))
+                    for (int c = -1; c <= 1; c++) {
+                        //System.out.println(nOctave*(intvls+2)+i);
+                        BuildGaussPry.My_Mat compare = dogaussianpry[nOctave*(intvls+2)+intvl+i];
+                        int comOneDiem = (r+row)*compare.GetCols() + (c+col);
+                        //if (val < compare.GetBlue(r,c))
+                    //    System.out.println("comonediem:" + comOneDiem);
+                        if (val < compare.ddate[comOneDiem].doubleValue())
                             return false;
                     }
                 }
@@ -44,9 +63,11 @@ public class ScaleSpaceExtrema {
         else{//? why exit the val<0
             for (int i = -1; i <= 1 ; i++) {//intvl
                 for (int r = -1; r <= 1; r++) {//row
-                    for (int c = 1; c <= 1; c++) {
-                        BuildGaussPry.My_Mat compare = dogaussianpry[nOctave*(intvls+2)+i];
-                        if (val > compare.GetBlue(r,c))
+                    for (int c = -1; c <= 1; c++) {
+                        BuildGaussPry.My_Mat compare = dogaussianpry[nOctave*(intvls+2)+intvl+i];
+                        //if (val > compare.GetBlue(r,c))
+                        int comOneDiem = (r+row)*compare.GetCols() + (c+col);
+                        if (val > compare.ddate[comOneDiem].doubleValue())
                             return false;
                     }
                 }
@@ -55,20 +76,37 @@ public class ScaleSpaceExtrema {
         return true;
     }
 
-    public Vector<KeyPoint> findScaleSpaceExtrema(BuildGaussPry.My_Mat []dogaussianpry,int intvls,int nOctaves ,double contr_thr){
+    public Vector<KeyPoint> findScaleSpaceExtrema(BuildGaussPry.My_Mat []dogaussianpry,int intvls,int nOctaves ,double contr_thr,int curv_thr){
+        System.out.println(dogaussianpry.length);
+
+        int is_stream_count = 0;
+        int more_pre_thr = 0;
         Vector<KeyPoint> keypoints = new Vector<KeyPoint>();
-        double prelim_contr_thr = 0.5*contr_thr/intvls;
-        for (int o = 0; o < nOctaves; o++) {
-            for (int i = 1; i <= intvls; i++) {
-                for (int r = 5; r < dogaussianpry[o*(intvls+2)].GetRows() - 5; r++) {
-                    for (int c = 0; c < dogaussianpry[o*(intvls+2)].GetCols() - 5; c++) {
+        double prelim_contr_thr = 0.5*contr_thr/intvls;//contr_thr = 0.04
+        for (int o = 0; o < nOctaves; o++) {//组遍历
+            for (int i = 1; i <= intvls; i++) {//层遍历1～intvls层
+                //System.out.println("r:" + dogaussianpry[o*(intvls+2)].GetRows());
+                for (int r = 5; r < dogaussianpry[o*(intvls+2)].GetRows() - 5; r++) {//层内行遍历
+                    for (int c = 5; c < dogaussianpry[o*(intvls+2)].GetCols() - 5; c++) {//层内列遍历
                         BuildGaussPry.My_Mat curScale = dogaussianpry[o*(intvls+2) + i];
-                        if (Math.abs(curScale.data[r*curScale.GetRows()+c]) > prelim_contr_thr){
-                            if (isExtrema(dogaussianpry,i,o,r,c,intvls)){
-                                KeyPoint point = Interp_extremum(dogaussianpry,o,i,r,c,intvls,contr_thr);
+                        if (r == 37 && c == 119){
+                            System.out.println(r + ":" + c);
+                        }
+                        //if (Math.abs(curScale.data[r*curScale.GetRows()+c]) > 0.006){//第一次筛选
+                        if (Math.abs(curScale.ddate[r*curScale.GetCols()+c]) > 0.006){//第一次筛选
+                              more_pre_thr++;
+                        //    System.out.println("o:" + o + "i:" + i);
+                            if (isExtrema(dogaussianpry,i,o,r,c,intvls)){//第二层筛选
+                        //        System.out.println("star:r:" + r);
+                                is_stream_count++;
+                                System.out.println(is_stream_count + ":" + "(" + r + "," + c + ")");
+
+                                KeyPoint point = Interp_extremum(dogaussianpry,o,i,r,c,intvls,contr_thr);//精确极值的坐标
                                 if (point != null){
-                                    if (!Is_too_edge_like(dogaussianpry[o*(intvls+2)+i],r,c,contr_thr)){
-                                       keypoints.add(point);
+                                    if (!Is_too_edge_like(dogaussianpry[o*(intvls+2)+i],r,c,curv_thr)){
+                                        point.x = point.x / 2.0;
+                                        point.y = point.y / 2.0;
+                                        keypoints.add(point);
                                     }
                                 }
                             }
@@ -77,6 +115,9 @@ public class ScaleSpaceExtrema {
                 }
             }
         }
+        System.out.println("pre_thr:" + prelim_contr_thr);
+        System.out.println("is_stream_count:" + is_stream_count);
+        System.out.println("more the preth:" + more_pre_thr);
         return keypoints;
     }
 
@@ -84,20 +125,35 @@ public class ScaleSpaceExtrema {
     public boolean Is_too_edge_like(BuildGaussPry.My_Mat dog_img,int row,int col,double curv_thr){
         double d,dxx,dyy,dxy,tr,det;
 
-        d = dog_img.GetBlue(row,col);
+        /*d = dog_img.GetBlue(row,col);
         dxx = dog_img.GetBlue(row,col + 1) + dog_img.GetBlue(row,col - 1) - 2*d;
         dyy = dog_img.GetBlue(row + 1,col) + dog_img.GetBlue(row - 1,col) - 2*d;
         dxy = (dog_img.GetBlue(row+1,col+1) - dog_img.GetBlue(row+1,col-1) -
-                dog_img.GetBlue(row-1,col+1) + dog_img.GetBlue(row-1,col-1))/4.0;
+                dog_img.GetBlue(row-1,col+1) + dog_img.GetBlue(row-1,col-1))/4.0;*/
+
+        int onediem = row*dog_img.GetCols() + col;
+        int cols = dog_img.GetCols();
+
+        d = dog_img.ddate[onediem];
+        dxx = dog_img.ddate[onediem+1] + dog_img.ddate[onediem-1] - 2*d;
+        dyy = dog_img.ddate[onediem+cols] + dog_img.ddate[onediem-cols] - 2*d;
+        dxy = (dog_img.ddate[onediem+cols+1] - dog_img.ddate[onediem+cols-1]-
+                dog_img.ddate[onediem-cols+1] + dog_img.ddate[onediem-cols-1])/4.0;
 
         tr = dxx + dyy;
         det = dxx * dyy - dxy * dxy;
 
-        if (det <= 0 || tr*tr*curv_thr >= (curv_thr+1)*(curv_thr+1)*det){
+        if (det <= 0) {
+            //System.out.println("is too edge");
             return true;
         }
+        if (tr*tr*curv_thr < (curv_thr+1)*(curv_thr+1)*det){
+            //System.out.println("is too edge");
+            return false;
+        }
 
-        return false;
+        //System.out.println("is too edge");
+        return true;
     }
 
     public KeyPoint Interp_extremum(BuildGaussPry.My_Mat []dogaussianpry,int octv,
@@ -107,7 +163,9 @@ public class ScaleSpaceExtrema {
         int i = 0;
         Increment increment = null;
         for (i = 0; i < SIFT_MAX_INTERP_STEPS; i++) {
+        //    System.out.println("Interp_Ex:i:" + i + "|" + "octv:" + octv + "|" + "intvl:" + intvl + "r:" + r + "c:" + c + "intvls:" + intvls);
             increment = Interp_step(dogaussianpry,octv,intvl,r,c,intvls);
+         //   System.out.println(increment.xr);
             if (Math.abs(increment.xi) < 0.5 && Math.abs(increment.xr) < 0.5 && Math.abs(increment.xc) < 0.5)
                 break;
 
@@ -115,18 +173,16 @@ public class ScaleSpaceExtrema {
             r += Math.round(increment.xr);
             intvl += Math.round(increment.xi);
 
-            if (intvl < 1 || intvl > intvls || c < 5 || r < 5 || c >= dogaussianpry[octv*(intvls + 2)].GetRows() - 5
+            if (intvl < 1 || intvl > intvls || c < 5 || r < 5 || r >= dogaussianpry[octv*(intvls + 2)].GetRows() - 5
                     || c >= dogaussianpry[octv*(intvls + 2)].GetCols() - 5){
                 return null;
             }
-
-            i = i + 1;
         }
 
         if (i >= SIFT_MAX_INTERP_STEPS){
             return null;
         }
-
+    //    System.out.println("[before]:" + r);
         double contr = Interp_contr(increment,dogaussianpry,octv,intvl,r,c,intvls);
         if (Math.abs(contr) < contr_thr/intvls){
             return null;
@@ -146,12 +202,16 @@ public class ScaleSpaceExtrema {
         Matrix dD = Deriv_3D(dogaussianpry,octv,intvl,r,c,intvls);
         Matrix H = Hessian_3D(dogaussianpry,octv,intvl,r,c,intvls);
 
+    //    System.out.println(H.getRowDimension() + ":" + H.getColumnDimension() );
+    //    System.out.println("db_col:" + dD.getColumnDimension() + "db_row:" + dD.getRowDimension());
         Matrix H_inv = H.inverse();
         Matrix X = H_inv.times(dD);
         X = X.times(-1);
 
-        increment.xi = X.get(0,2);
-        increment.xr = X.get(0,1);
+        //System.out.println("X_col:" + X.getColumnDimension() + "X_row:" + X.getRowDimension());
+
+        increment.xi = X.get(2,0);
+        increment.xr = X.get(1,0);
         increment.xc = X.get(0,0);
 
         return increment;
@@ -163,10 +223,13 @@ public class ScaleSpaceExtrema {
         X.set(1,0,increment.xr);
         X.set(2,0,increment.xi);
 
-        Matrix dD = Deriv_3D(dogaussianpry,octv,intvl,r,c,intvls).inverse();
+        Matrix dD = Deriv_3D(dogaussianpry,octv,intvl,r,c,intvls).transpose();
         Matrix T = dD.times(X);
 
-        return dogaussianpry[octv*(intvls+2)+intvl].GetBlue(r,c) + 0.5*T.get(0,0);
+       // return dogaussianpry[octv*(intvls+2)+intvl].GetBlue(r,c) + 0.5*T.get(0,0);
+        int onediem = octv*(intvls+2)+intvl;
+        int cols = dogaussianpry[onediem].GetCols();
+        return dogaussianpry[onediem].ddate[r*cols+c] + 0.5*T.get(0,0);
     }
 
     public Matrix Deriv_3D(BuildGaussPry.My_Mat []dogaussianpry,int octv, int intvl, int r, int c,int intvls){
@@ -176,9 +239,18 @@ public class ScaleSpaceExtrema {
         BuildGaussPry.My_Mat curimg = dogaussianpry[octv*(intvls+2) + intvl];
         BuildGaussPry.My_Mat preimg = dogaussianpry[octv*(intvls+2) + intvl - 1];
         BuildGaussPry.My_Mat nextimg = dogaussianpry[octv*(intvls+2) + intvl + 1];
-        dx = (curimg.GetBlue(r,c+1) - curimg.GetBlue(r,c-1))/2.0;
+
+    /*    dx = (curimg.GetBlue(r,c+1) - curimg.GetBlue(r,c-1))/2.0;
         dy = (curimg.GetBlue(r+1,c) - curimg.GetBlue(r-1,c))/2.0;
-        ds = (nextimg.GetBlue(r,c) - preimg.GetBlue(r,c))/2.0;
+        ds = (nextimg.GetBlue(r,c) - preimg.GetBlue(r,c))/2.0;*/
+
+        int onediem = r*curimg.GetCols() + c;
+        int cols = curimg.GetCols();
+    //    System.out.println("[Deriv_3D]:r:" + r + "cols:" + curimg.GetCols());
+    //    System.out.println("curimgd_size:" + curimg.ddate.length);
+        dx = (curimg.ddate[onediem+1] - curimg.ddate[onediem-1])/2.0;
+        dy = (curimg.ddate[onediem+cols] - curimg.ddate[onediem-cols])/2.0;
+        ds = (nextimg.ddate[onediem] - preimg.ddate[onediem])/2.0;
 
         dI.set(0,0,dx);
         dI.set(1,0,dy);
@@ -195,19 +267,33 @@ public class ScaleSpaceExtrema {
         BuildGaussPry.My_Mat preimg = dogaussianpry[octv*(intvls+2) + intvl - 1];
         BuildGaussPry.My_Mat nextimg = dogaussianpry[octv*(intvls+2) + intvl + 1];
 
-        v = curimg.GetBlue(r,c);
-        dxx = curimg.GetBlue(r,c+1) + curimg.GetBlue(r,c-1) - 2*v;
-        dyy = curimg.GetBlue(r+1,c) + curimg.GetBlue(r-1,c) - 2*v;
-        dss = nextimg.GetBlue(r,c) + preimg.GetBlue(r,c) - 2*v;
+        //v = curimg.GetBlue(r,c);
+        // dxx = curimg.GetBlue(r,c+1) + curimg.GetBlue(r,c-1) - 2*v;
+        //dyy = curimg.GetBlue(r+1,c) + curimg.GetBlue(r-1,c) - 2*v;
+        //dss = nextimg.GetBlue(r,c) + preimg.GetBlue(r,c) - 2*v;
+        //dxy = (curimg.GetBlue(r+1,c+1) - curimg.GetBlue(r+1,c-1) -
+                //curimg.GetBlue(r-1,c+1) + curimg.GetBlue(r-1,c-1))/4.0;
+        //dxs = (nextimg.GetBlue(r,c+1) - nextimg.GetBlue(r,c-1) -
+          //      preimg.GetBlue(r,c+1) + preimg.GetBlue(r,c-1))/4.0;
+        //dys = (nextimg.GetBlue(r+1,c) - nextimg.GetBlue(r-1,c) -
+          //      preimg.GetBlue(r+1,c) + preimg.GetBlue(r-1,c))/4.0;
 
-        dxy = (curimg.GetBlue(r+1,c+1) - curimg.GetBlue(r+1,c-1) -
-                curimg.GetBlue(r-1,c+1) + curimg.GetBlue(r-1,c-1))/4.0;
+        int onediem = r*curimg.GetCols() + c;
+        int cols = curimg.GetCols();
 
-        dxs = (nextimg.GetBlue(r,c+1) - nextimg.GetBlue(r,c-1) -
-        preimg.GetBlue(r,c+1) + preimg.GetBlue(r,c-1))/4.0;
+        v = curimg.ddate[onediem];
+        dxx = curimg.ddate[onediem+1] + curimg.ddate[onediem-1] - 2*v;
+        dyy = curimg.ddate[onediem+cols] + curimg.ddate[onediem-cols] - 2*v;
+        dss = nextimg.ddate[onediem] + preimg.ddate[onediem] - 2*v;
 
-        dys = (nextimg.GetBlue(r+1,c) - nextimg.GetBlue(r-1,c) -
-                preimg.GetBlue(r+1,c) + preimg.GetBlue(r-1,c))/4.0;
+        dxy = (curimg.ddate[onediem+cols+1] - curimg.ddate[onediem+cols-1] -
+                curimg.ddate[onediem-cols+1] + curimg.ddate[onediem-cols-1])/4.0;
+
+        dxs = (nextimg.ddate[onediem+1]-nextimg.ddate[onediem-1]-
+        preimg.ddate[onediem+1] + preimg.ddate[onediem-1])/4.0;
+
+        dys = (nextimg.ddate[onediem+cols] - nextimg.ddate[onediem-cols] -
+        preimg.ddate[onediem+cols] + preimg.ddate[onediem-cols])/4.0;
 
         H.set(0,0,dxx);
         H.set(0,1,dxy);
