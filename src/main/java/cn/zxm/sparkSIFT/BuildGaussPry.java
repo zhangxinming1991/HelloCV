@@ -152,6 +152,12 @@ public class BuildGaussPry {
         }
     }
 
+    /**
+     * CreateGaussFilter1D 创建高斯滤波模板
+     * @param n 高斯模糊半径
+     * @param sigma 尺度参数
+     * @param gaussfilter 保存结果模板
+     */
     public static void CreateGaussFilter1D(int n,Double sigma,Double[] gaussfilter){
         int size = 2*n + 1;
         Double sigma22 = 2*sigma*sigma;
@@ -163,14 +169,13 @@ public class BuildGaussPry {
 
         Double sum = 0.0;
         for (int i = 0; i < size; i++) {
-            sum = sum + gaussfilter[i];}
-    //    System.out.println("sum:" + sum);
+            sum = sum + gaussfilter[i];
+        }
+
         if (sum.equals(1.0)) return;
         else {
-        //    System.out.println("sum<1");
-            for (int i = 0;i<size;i++){
+            for (int i = 0;i<size;i++){//归一化
                 gaussfilter[i] = gaussfilter[i]/sum;
-        //        System.out.println(gaussfilter[i]);
             }
         }
     }
@@ -184,28 +189,29 @@ public class BuildGaussPry {
         }
     }
 
+    /**
+     * ToGray 获得原始图片的灰度图片
+     * @param bimg 原始图片
+     * @param gimg 结果：灰度图
+     */
     public static void ToGray(BufferedImage bimg,My_Mat gimg){
-     //   System.out.println(bimg.getWidth() + ":" + bimg.getHeight());
+
         for (int i = 0; i < bimg.getHeight(); i++) {
-           // System.out.println(i);
+
             for (int j = 0; j < bimg.getWidth(); j++) {
                 final int color = bimg.getRGB(j,i);
-                //System.out.println("rgb:" + color);
+
                 final short r =   (short) ((color>>16) & 0xff);
                 final short g =  (short) ((color>>8) & 0xff);
                 final short b =  (short) (color & 0xff);
 
                 double gray =   0.3*r + 0.59*g + 0.11*b;
-            //    System.out.print(gray + " ");
-                //gimg.setRGB(i,j,colorToRGB(255,gray,gray,gray));
+
                 gimg.ddate[i*(bimg.getWidth())+j] = gray/255.0;
 
                 int gray_i = (int) Math.round(Double.valueOf(gray));
                 gimg.data[i*(bimg.getWidth())+j] = colorToRGB((byte) 255,gray_i,gray_i,gray_i);
-                //gimg.data[i*(bimg.getWidth())+j] = (int) Math.round(Double.valueOf(gray));
-
             }
-         //   System.out.println();
         }
     }
 
@@ -272,31 +278,35 @@ public class BuildGaussPry {
         img_dst.CreateDData(img_src.cols,img_src.rows,ddata);
     }
 
+    /**
+     * Blur1D_d 一维高斯模糊
+     * @param img_src 输入
+     * @param img_dst 输出
+     * @param gaussfilter 高斯模板
+     * @param radius 模糊半径
+     */
     public static void Blur1D_d(My_Mat img_src,My_Mat img_dst,Double []gaussfilter,int radius){
-        //double temp_r = 0.0;
+
         Integer[] data = new Integer[img_src.rows*img_src.cols];
         Double[] ddata = new Double[img_src.rows*img_src.cols];
-        //System.out.println("src:" + img_src.rows*img_src.cols + " " + "dst:" + img_dst.rows*img_dst.cols);
+
         Double []temp_r = new Double[img_src.rows*img_src.cols];
 
         for (int inx = 0,i = 0; i < img_src.rows; i++) {
             for (int j = 0; j < img_src.cols; j++,inx++) {
-                //double temp_r = 0.0;
                 temp_r[inx] = 0.0;
                 for (int n = 0,l = -radius; l <= radius; l++,n++) {
                     int l_edge = Edge(l,j,img_src.cols);
                     int inx_k = inx + l_edge;
-                    //    System.out.println(inx_k + ":" + n);
                     temp_r[inx] += img_src.ddate[inx_k]*gaussfilter[n];
                 }
-                //img_mat.data[inx] = Double.valueOf(temp_r).intValue();
             }
         }
 
-        for (int inx = 0,i = 0; i < img_src.cols; i++) {
+        for (int i = 0; i < img_src.cols; i++) {
             for (int j = 0; j < img_src.rows; j++) {
                 double r = 0.0;
-                inx = j*img_src.cols + i;
+                int inx = j*img_src.cols + i;
                 for (int n = 0,k = -radius; k <=radius; k++,n++) {
                     int k_edge = Edge(k,j,img_src.rows);
                     int inx_k = inx + img_src.cols*k_edge;
@@ -306,7 +316,6 @@ public class BuildGaussPry {
                     r = 1.0;
                 ddata[inx] = r;
                 data[inx] = (int) Math.round(Clamp(r*255));
-                //img_dst.data[inx] = Double.valueOf(r).intValue();
             }
         }
 
@@ -314,48 +323,47 @@ public class BuildGaussPry {
         img_dst.CreateDData(img_src.cols,img_src.rows,ddata);
     }
 
+    /**
+     * Subtract_Gray 矩阵相减
+     * @param minuend
+     * @param subtrahend
+     * @param result
+     */
     public static void Subtract_Gray(My_Mat minuend,My_Mat subtrahend,My_Mat result){
 
-        short p = 0;
-        Double p_d = 0.0;
+        short p;
+        Double p_d;
         Double color_d[] = new Double[minuend.rows * minuend.cols];
         Integer color[] = new Integer[minuend.rows * minuend.cols];
         for (int r = 0; r < minuend.rows; r++) {
             for (int c = 0; c < minuend.cols; c++) {
-               // short gray1 = minuend.GetBlue(r,c);
-               // short gray2 = subtrahend.GetBlue(r,c);
 
                 Double gray1_d = minuend.ddate[r*minuend.cols + c];
                 Double gray2_d = subtrahend.ddate[r*minuend.cols + c];
-                //p = (short) Math.abs(gray1 - gray2);
                 p_d = gray1_d - gray2_d;
 
                 if (p_d < 0)
-                    p = 0;
+                    p = 0;//?是否为0
                 else
                     p = (short) Math.round(p_d * 255.0);
-                //color[r*minuend.cols + c] = colorToRGB((byte) 255,p,p,p);
+
                 color[r*minuend.cols + c] = (int) p;
                 color_d[r*minuend.cols + c] = p_d;
             }
-            //System.out.println();
         }
 
-    //    System.out.println(result);
-    //    System.out.println(minuend.cols*minuend.rows + ":" + color.length);
         result.CreateData(minuend.cols,minuend.rows,color);
         result.CreateDData(minuend.cols,minuend.rows,color_d);
     }
 
     /**
-     *
+     * CreateGaussinPry 创建高斯塔
      * @param img_mat save the results of gaussian pry
      * @param intvls the layer num of per group
      * @param nOctaves the num of group
      * @param sig the coefficient of gaussianfilter formula
      */
     public static void CreateGaussinPry (My_Mat []img_mat,int intvls,int nOctaves,Double []sig,int radius) throws IOException {
-        //int radius = 10;
 
         for (int o = 0; o < nOctaves; o++) {
             for (int i = 0; i < intvls + 3; i++) {
@@ -366,67 +374,47 @@ public class BuildGaussPry {
                 else if(i == 0){
                     int w = img_mat[(o-1)*(intvls+3)+intvls].cols;
                     int h = img_mat[(o-1)*(intvls+3)+intvls].rows;
+
                     Double[] src = img_mat[(o-1)*(intvls+3)+intvls].ddate;
 
-                    Integer[] srcI = img_mat[(o-1)*(intvls+3)+intvls].data;
-
                     BilineInterpolationScale bps = new BilineInterpolationScale();
-                    BiCubicInterpolationScale cps = new BiCubicInterpolationScale();
-                    /*dst.data = bps.imgScale(src,w,h,w/2,h/2);
-                    dst.rows = h/2;
-                    dst.cols = w/2;*/
-                    //Integer []resize_data = bps.imgScale(src,w,h,w/2,h/2);
-                    //dst.CreateData(w/2,h/2,resize_data);
 
-                //    Double []resized_ddate = new Double[(w/2) * (h/2)];
-                    Double [] resized_ddate = bps.imgScale_d(src,w,h,w/2,h/2);
+                    Double [] resized_ddate = bps.imgScale_d(src,w,h,w/2,h/2);//双线性插值
 
-                /*    Integer[] resized_data = cps.imgScale(srcI,w,h,w/2,h/2);
-                    for (int j = 0; j < (w/2) * (h/2); j++) {
-                        resized_ddate[j] = resized_data[j]/255.0;
-                    }*/
-                    //dst.CreateDData(w/2,h/2,resized_ddate);
-                    /*Double[] resized_ddate = new Double[(w/2) * (h/2)];
-                    for (int j = 0; j < (w/2)*(h/2); j++) {
-                        resized_ddate[j] = resized_data[j]/255.0;
-                    }*/
                     dst.CreateDData(w/2,h/2,resized_ddate);
+
+            /*        BiCubicInterpolationScale cps = new BiCubicInterpolationScale();//立方插值
+                    Integer[] srcI = img_mat[(o-1)*(intvls+3)+intvls].data;*/
                 }
                 else{
                     Double []gaussfilter1D = new Double[(2*radius + 1)];
                     CreateGaussFilter1D(radius,sig[i],gaussfilter1D);
-        //            System.out.println(o*(intvls + 3) + i-1);
+
                     My_Mat src = img_mat[o*(intvls + 3) + i-1];
-               //     Blur1D(src,dst,gaussfilter1D,radius);
+
                     Blur1D_d(src,dst,gaussfilter1D,radius);
                 }
             }
         }
     }
 
+    /**
+     * CreateDogGaussinPry 创建差分高斯塔
+     * @param gaussian 输入：高斯塔
+     * @param doggaussian 输出：差分高斯塔
+     * @param intvls 高斯塔层数
+     * @param nOctaves 组数
+     * @throws IOException
+     */
     public static void CreateDogGaussinPry(My_Mat []gaussian,My_Mat []doggaussian,int intvls,int nOctaves) throws IOException {
-    //    System.out.println("dog_len:" + doggaussian.length);
+
         for (int o = 0; o < nOctaves; o++) {
             for (int i = 0; i < intvls+2; i++) {
                 int one_dim_g = o*(intvls+3) + i;
                 int one_dim_d = o*(intvls+2) + i;
-                if (doggaussian[one_dim_d] == null)
-                    System.out.println("null" + one_dim_d);
-                if (gaussian[one_dim_g].ddate == null)
-                    System.out.println("ddata is null" + o + ":" + i);
+
                 Subtract_Gray(gaussian[one_dim_g+1],gaussian[one_dim_g],doggaussian[one_dim_d]);
 
-                /*if (o == 0&& i == 0){
-                    String tileName1 = "gau_" + o + "_" + i;
-                    String tileName2 = "gau_" + o + "_" + (i+1);
-                    String tileNamed = "dog_" + o + "_" + (i);
-                    SavePicPixel(tileName1,gaussian[one_dim_g]);
-                    SavePicPixel(tileName2,gaussian[one_dim_g+1]);
-                    SavePicPixel(tileNamed,doggaussian[one_dim_d]);
-
-                    String tileName3 = "dogdetail_" + o + "_" + i;
-                    SavedogPixel(tileName3,doggaussian[one_dim_d],gaussian[one_dim_g+1],gaussian[one_dim_g]);
-                }*/
                 String tileNamed = "dogmes/dog_" + o + "_" + (i);
                 SavePicPixel(tileNamed,doggaussian[one_dim_d],"FLOAT");
             }
@@ -447,6 +435,12 @@ public class BuildGaussPry {
         frame.setVisible(true);
     }
 
+    /**
+     * GrayToColor 将灰度值转变成rgb值
+     * @param ctx
+     * @param gray
+     * @return
+     */
     public static List<Integer> GrayToColor(JavaSparkContext ctx,List<Integer> gray){
         JavaRDD rdd_img_mat= ctx.parallelize(gray,1);
         List<Integer> color_temp = rdd_img_mat.map(new Function<Integer,Integer>() {
@@ -513,40 +507,40 @@ public class BuildGaussPry {
         return sigma.toArray(new Double[intvls+3]);
     }
 
+    /**
+     * CreateInitImg 初始化高斯塔最底层的
+     * @param ctx
+     * @param srcImg
+     * @param sigma
+     * @param radius
+     * @throws IOException
+     */
     public static void CreateInitImg(JavaSparkContext ctx,My_Mat srcImg,Double sigma,int radius) throws IOException {
         SavePicPixel("init_imgmes/scale_before.txt",srcImg,"FLOAT");
-        BilineInterpolationScale bps = new BilineInterpolationScale();
 
         BiCubicInterpolationScale cps = new BiCubicInterpolationScale();
 
         int re_r = srcImg.rows*2;
         int re_c = srcImg.cols*2;
+
         srcImg.data = cps.imgScale(srcImg.data,srcImg.cols,srcImg.rows,re_c,re_r);
-        //srcImg.ddate = bps.imgScale_d(srcImg.ddate,srcImg.cols,srcImg.rows,srcImg.cols*2,srcImg.rows*2);
         srcImg.rows = re_r;
         srcImg.cols = re_c;
-        //Integer []data = new Integer[srcImg.rows*srcImg.cols];
+
         Double []ddata = new Double[srcImg.rows*srcImg.cols];
 
         for (int i = 0; i < srcImg.rows*srcImg.cols; i++) {
-            //data[i] = (int) Math.round(srcImg.ddate[i]*255);
             ddata[i] = (srcImg.data[i] & 0x000000ff) / 255.0;
         }
 
-        //srcImg.data = data;
         srcImg.ddate = ddata;
         SavePicPixel("init_imgmes/smooth_before.txt",srcImg,"FLOAT");
         ShowPic(ctx,srcImg,"2_scale");
-    /*    Double[] ddata = new Double[srcImg.rows*srcImg.cols];
-        for (int i = 0; i < srcImg.rows*srcImg.cols; i++) {
-            ddata[i] = srcImg.data[i]/255.0;
-        }*/
 
         Double sig_diff = Math.sqrt( sigma * sigma - 0.5 * 0.5 * 4 );
-    //    System.out.println(sig_diff);
         Double []gaussfilter1D = new Double[(2*radius + 1)];
         CreateGaussFilter1D(radius,sig_diff,gaussfilter1D);
-     //   Blur1D(srcImg,srcImg,gaussfilter1D,radius);
+
         Blur1D_d(srcImg,srcImg,gaussfilter1D,radius);
     }
 
@@ -608,14 +602,11 @@ public class BuildGaussPry {
 
         BufferedImage bimg = ImageIO.read(new File("car2.jpg"));//原始图片
 
-        Integer intvls = 3;
+        Integer intvls = 3;//高斯塔每组的层数 （实际为3+3层）
 
         Double nOctaves_d = Math.log( new Min().value(bimg.getWidth(), bimg.getHeight() ) ) / Math.log(2.0) - 2;
-        Integer nOctaves = nOctaves_d.intValue();
-        /*if ((nOctaves_d - nOctaves.doubleValue()) > 0.5)
-            nOctaves = nOctaves + 1;*/
+        Integer nOctaves = nOctaves_d.intValue();//高斯塔组数
 
-        System.out.println("o:" + nOctaves + " " + "i:" + intvls);
         My_Mat []img_pry = new My_Mat[nOctaves*(intvls+3)];//高斯塔
         My_Mat[] doggaussian = new My_Mat[nOctaves*(intvls+2)];//差分高斯塔
         for (int i = 0; i < img_pry.length; i++) {
@@ -626,50 +617,23 @@ public class BuildGaussPry {
         }
         img_pry[0].CreateData(bimg.getWidth(),bimg.getHeight(),new Integer[bimg.getWidth()*bimg.getHeight()]);
         img_pry[0].CreateDData(bimg.getWidth(),bimg.getHeight(),new Double[bimg.getWidth()*bimg.getHeight()]);
+
         ToGray(bimg,img_pry[0]);//取得灰度图
 
         long startMili = System.currentTimeMillis();
+
         /*build gaussian pry*/
-        Double[] sigma = CreateSigma(ctx,intvls);
+        Double[] sigma = CreateSigma(ctx,intvls);//初始化尺度参数
         CreateInitImg(ctx,img_pry[0],sigma[0],radius);//初始化高斯塔最底层的图片
 
         SavePicPixel("init_imgmes/init_img.txt",img_pry[0],"FLOAT");//保存init_img
 
         CreateGaussinPry(img_pry,intvls,nOctaves,sigma,radius);//创建高斯塔
         CreateDogGaussinPry(img_pry,doggaussian,intvls,nOctaves);//创建差分高斯塔
-
-        /*for (int r = 0; r < 1; r++) {
-            for (int c = 0; c < doggaussian[0].cols; c++) {
-                System.out.print(doggaussian[0].GetBlue(r,c) + " ");
-            }
-            System.out.println();
-        }*/
-
         /*build gaussian pry*/
+
         long endMili = System.currentTimeMillis();
         System.out.println((endMili-startMili) + "ms" );
-
-        /*打印高斯塔*/
-    /*    for (int i = 0; i < img_pry.length; i++) {
-
-            String titleName = "o" + i/(intvls+3) + ":" + "i" + i%(intvls+3);
-            ShowPic(ctx,img_pry[i],titleName);
-        }*/
-        /*打印高斯塔*/
-
-        /*打印差分高斯塔*/
-    /*    for (int i = 0; i < doggaussian.length; i++) {
-
-            String titleName = "o" + i/(intvls+2) + ":" + "i" + i%(intvls+2);
-            ShowPic(ctx,doggaussian[i],titleName);
-        }*/
-        /*打印差分高斯塔*/
-
-        //SavePic(ctx,img_pry[0],"car2_gray.jpg");
-
-    /*     Double []gaussfilter2D = new Double[(2*radius + 1)*(2*radius + 1)];
-        CreateGaussFilter2D(radius,3.0,gaussfilter2D);
-        Blur2D(img_pry,gaussfilter2D,radius);*/
 
         double contr_thr = 0.04;
         int curv_thr = 10;
