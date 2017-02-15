@@ -39,55 +39,37 @@ object ImagesFeatureEx {
     /*将所有图片灰度化处理*/
     val targetImg = ImageUtilities.readMBF(y.open())
       val engine = new DoGSIFTEngine()
-      engine.findFeatures(targetImg.flatten())
+      (x,engine.findFeatures(targetImg.flatten()))
 }}).collect()
     /*获取每张图片的特征点集合*/
 
-    /*val querykeypoint = keypoints(1)
+    val querykeypoint = keypoints(1)._2
+    System.out.println("querykeypoint size:" + querykeypoint.size())
 
     /*特征点集合间匹配*/
-    val match_result = sc.parallelize(keypoints,10).map(x => {
+    val match_result = sc.parallelize(keypoints,10).map({case(name,point) => {
 
       //matcher可以定义成静态变量，但是需要序列
       val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
       val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
       matcher.setModelFeatures(querykeypoint)
 
-      matcher.findMatches(x)
-      matcher.getMatches
-    }).collect()*/
+      matcher.findMatches(point)
+      matcher.getMatches.size()
+    }}).collect()
 
-    val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
+    //打印匹配结果
+    match_result.iterator.foreach(x => System.out.println(x))
+
+    /*val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
     val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
 
-    matcher.setModelFeatures(keypoints(1))
-    matcher.findMatches(keypoints(0))
-
-    val basicMatches: MBFImage = MatchingUtilities.drawMatches(query, target, matcher.getMatches, RGBColour.RED)
-    DisplayUtilities.display(basicMatches)
-
-  /*val query: MBFImage = ImageUtilities.readMBF(new File("car2.jpg"))
-    val target: MBFImage = ImageUtilities.readMBF(new File("car1.jpg"))
-
-    val startTime: Long = System.currentTimeMillis
-    val engine: DoGSIFTEngine = new DoGSIFTEngine
-    val queryKeypoints: LocalFeatureList[Keypoint] = engine.findFeatures(query.flatten)
-    val endTime: Long = System.currentTimeMillis
-    System.out.println("sift findFeature time:" + (endTime - startTime) + "ms")
-
-    val targetKeypoints: LocalFeatureList[Keypoint] = engine.findFeatures(target.flatten)
-
-    //LocalFeatureMatcher<Keypoint> matcher = new BasicMatcher<Keypoint>(80);
-    val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
-    val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
-
-    matcher.setModelFeatures(queryKeypoints)
-    matcher.findMatches(targetKeypoints)
+    matcher.setModelFeatures(keypoints(1)._2)
+    matcher.findMatches(keypoints(0)._2)
 
     val basicMatches: MBFImage = MatchingUtilities.drawMatches(query, target, matcher.getMatches, RGBColour.RED)
     DisplayUtilities.display(basicMatches)*/
-    //System.out.println("***" + x.length)
-    //x.iterator.foreach(x => System.out.println(x))
+
 
     sc.stop()
 }
