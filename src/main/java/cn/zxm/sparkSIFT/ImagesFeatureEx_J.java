@@ -85,6 +85,8 @@ public class ImagesFeatureEx_J {
         matcher.setModelFeatures(queryKeypoints);
         matcher.findMatches(targetKeypoints);
 
+        System.out.println("find match size:" + matcher.getMatches().size());
+
         MBFImage basicMatches = MatchingUtilities.drawMatches(query,target,matcher.getMatches(), RGBColour.RED);
         DisplayUtilities.display(basicMatches);
 
