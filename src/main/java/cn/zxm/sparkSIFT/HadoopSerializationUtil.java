@@ -62,7 +62,7 @@ public class HadoopSerializationUtil {
         Kp[] d_kps = (Kp[]) d_arrayWritable.toArray();
         System.out.println(d_kps[1].name);*/
 
-        String tmpImageSEQ_path = "hdfs://simon-Vostro-3905:9000/user/root/img_sq/img_sq.seq"; //图片集合序列文件
+        String tmpImageSEQ_path = "hdfs://simon-Vostro-3905:9000/user/root/img_sq"; //图片集合序列文件
         String out_path = "des_out";
         String featureSq_path = "hdfs://simon-Vostro-3905:9000/user/root/featureSq";
         String featureSqfile = "hdfs://simon-Vostro-3905:9000/user/root/featureSq/part-m-00000";//特征点集合序列文件
@@ -79,10 +79,10 @@ public class HadoopSerializationUtil {
         ffile.delete();*/
 
         //特征提取
-        /*HadoopLocalFeaturesTool.main(new String[] { "-D", "mapred.child.java.opts=\"-Xmx3000M\"", "-i",
-                tmpImageSEQ_path, "-o", featureSq_path });*/
+        HadoopLocalFeaturesTool.main(new String[] { "-D", "mapred.child.java.opts=\"-Xmx3000M\"", "-i",
+                tmpImageSEQ_path, "-o", featureSq_path });
 
-        final LocalFeatureList<Keypoint> firstKPL = getKPLFromSequence(new Text("car2.jpg"), featureSq_path);
+        //final LocalFeatureList<Keypoint> firstKPL = getKPLFromSequence(new Text("car2.jpg"), featureSq_path);
 
     }
 

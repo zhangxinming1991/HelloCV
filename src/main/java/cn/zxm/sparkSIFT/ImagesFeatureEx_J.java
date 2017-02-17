@@ -64,10 +64,11 @@ public class ImagesFeatureEx_J {
 
         InputStream in = new ByteArrayInputStream(byteArray);
         BufferedImage bufImage = ImageIO.read(in);*/
+        String target_path = "/home/simon/Public/spark-SIFT/imgdataset/20160106_135857.jpg";
+        String query_path = "/home/simon/Public/spark-SIFT/imgdataset/car2.jpg";
 
-
-        MBFImage query = ImageUtilities.readMBF(new File("car2.jpg"));
-        MBFImage target = ImageUtilities.readMBF(new File("car1.jpg"));
+        MBFImage query = ImageUtilities.readMBF(new File(query_path));
+        MBFImage target = ImageUtilities.readMBF(new File(target_path));
 
         long startTime = System.currentTimeMillis();
         DoGSIFTEngine engine = new DoGSIFTEngine();
