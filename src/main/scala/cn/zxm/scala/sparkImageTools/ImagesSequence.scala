@@ -7,8 +7,6 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{BytesWritable, Text}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
 import org.apache.spark.{SparkContext, SparkConf}
-import org.apache.spark.sql.SparkSession
-import org.openimaj.hadoop.tools.sequencefile.SequenceFileTool
 
 /**
   * Created by root on 17-2-16.
@@ -29,25 +27,38 @@ object ImagesSequence {
     conf.set("spark.driver.maxResultSize","10g")
     val sc = new SparkContext(conf)
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"
     val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
     val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
-    val tmpImageSEQ_path: String = "hdfs://simon-Vostro-3905:9000/user/root/img_sq/"
+
+    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+
+    val dataset_0 = "dataset_500k" //数据集大小
+    val dataset_1 = "dataset_70m" //数据集大小
+    val dataset_2 = "dataset_2g"
+    val dataset_3 = "dataset_200m"
+    val dataset_test = "dataset_test"
+
+    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_test + "/*" //数据集路径
+
+    val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
+
+    val path = "/user/root/img_sq/" + dataset_test + "/"
+    val tmpImageSEQ_path: String = hdfs_htname + path
 
     /*val cmdArgs: Array[String] = Array[String]("-m", "CREATE", "-kns", "FILENAME", "-o", tmpImageSEQ_path, "imgdataset/car1.jpg","imgdataset/car2.jpg",
     "imgdataset/car3.jpg","imgdataset/car4.jpg")
 
     SequenceFileTool.main(cmdArgs)*/
 
-    rm_hdfs(hdfs_htname,"/user/root/img_sq/")
+    rm_hdfs(hdfs_htname,path)
 
-    sc.binaryFiles(initImgs_path,50).map(f => {
-      System.out.println(f._1.substring(prefix_path.length,f._1.length))
-      val fname = new Text(f._1.substring(prefix_path.length,f._1.length))
+    sc.binaryFiles(initImgs_500k_path_hdfs,20).map(f => {
+      val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
+
       val bytes = f._2.toArray()
-
       val fcontext = new BytesWritable(bytes)
-      (fname,fcontext)
+
+      (fname,fcontext) //以key,value返回
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
 
     sc.stop()

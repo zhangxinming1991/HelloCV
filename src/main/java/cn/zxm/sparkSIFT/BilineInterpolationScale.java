@@ -17,7 +17,7 @@ public class BilineInterpolationScale {
         image = ImageIO.read(f);
     }*/
 
-    public Integer[] imgScale(Integer[] inPixelsData, int srcW, int srcH, int destW, int destH) {
+    public static  Integer[] imgScale(Integer[] inPixelsData, int srcW, int srcH, int destW, int destH) {
         double[][][] input3DData = processOneToThreeDeminsion(inPixelsData, srcH, srcW);
 
         int[][][] outputThreeDeminsionData = new int[destH][destW][4];
@@ -105,11 +105,11 @@ public class BilineInterpolationScale {
         return tempData;
     }
 
-    private int getClip(int x, int max, int min) {
+    private static  int getClip(int x, int max, int min) {
         return x > max ? max : x < min ? min : x;
     }
 
-    public Integer[] convertToOneDim(int[][][] data, int imgCols, int imgRows) {
+    public static Integer[] convertToOneDim(int[][][] data, int imgCols, int imgRows) {
         Integer[] oneDPix = new Integer[imgCols * imgRows];
 
         for (int row = 0, cnt = 0; row < imgRows; row++) {
@@ -141,7 +141,7 @@ public class BilineInterpolationScale {
         return oneDPix;
     }
 
-    private double [][][] processOneToThreeDeminsion(Integer[] oneDPix2, int imgRows, int imgCols) {
+    private static  double [][][] processOneToThreeDeminsion(Integer[] oneDPix2, int imgRows, int imgCols) {
         double[][][] tempData = new double[imgRows][imgCols][4];
         for(int row=0; row<imgRows; row++) {
 

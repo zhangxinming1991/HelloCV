@@ -421,7 +421,7 @@ public class BuildGaussPry {
         }
     }
 
-    public static void ShowPic(JavaSparkContext ctx,My_Mat showimg,String titleName){
+    public static void ShowPic(My_Mat showimg,String titleName){
 
         //List<Integer> color_temp = GrayToColor(ctx,Arrays.asList(showimg.data));
         List<Integer> color_temp = Arrays.asList(showimg.data);
@@ -430,6 +430,7 @@ public class BuildGaussPry {
         gray_temp.setRGB(0,0,showimg.cols,showimg.rows,color,0,showimg.cols);
 
         JFrame frame = new JFrame(titleName);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.getContentPane().add(new JLabel(new ImageIcon(gray_temp)));
         frame.pack();
         frame.setVisible(true);
@@ -472,7 +473,7 @@ public class BuildGaussPry {
         ImageIO.write(gray_temp,"jpg",newFile);
     }
 
-    public static Double[] CreateSigma(JavaSparkContext ctx,int intvls){
+    public static Double[] CreateSigma(int intvls){
         final Double k = Math.pow(2,1.0/intvls);
 
         Double[] sig = new Double[intvls+3];
@@ -480,7 +481,12 @@ public class BuildGaussPry {
         sig[0] = 1.6;
         sig[1] = sig[0] * Math.sqrt(k*k - 1);
 
-        JavaRDD rdd_sig = ctx.parallelize(Arrays.asList(sig),1);
+        for (int i = 2; i < sig.length; i++) {
+            sig[i] = sig[i-1]*k;
+        }
+
+        return sig;
+        /*JavaRDD rdd_sig = ctx.parallelize(Arrays.asList(sig),1);
 
         FlatMapFunction<Iterator<Double>,Double> make_sig = new FlatMapFunction<Iterator<Double>, Double>() {
             @Override
@@ -504,18 +510,17 @@ public class BuildGaussPry {
 
         List<Double> sigma = rdd_sig.mapPartitions(make_sig).collect();
 
-        return sigma.toArray(new Double[intvls+3]);
+        return sigma.toArray(new Double[intvls+3]);*/
     }
 
     /**
      * CreateInitImg 初始化高斯塔最底层的
-     * @param ctx
      * @param srcImg
      * @param sigma
      * @param radius
      * @throws IOException
      */
-    public static void CreateInitImg(JavaSparkContext ctx,My_Mat srcImg,Double sigma,int radius) throws IOException {
+    public static void CreateInitImg(My_Mat srcImg,Double sigma,int radius) throws IOException {
         SavePicPixel("init_imgmes/scale_before.txt",srcImg,"FLOAT");
 
         BiCubicInterpolationScale cps = new BiCubicInterpolationScale();
@@ -535,7 +540,7 @@ public class BuildGaussPry {
 
         srcImg.ddate = ddata;
         SavePicPixel("init_imgmes/smooth_before.txt",srcImg,"FLOAT");
-        ShowPic(ctx,srcImg,"2_scale");
+        ShowPic(srcImg,"2_scale");
 
         Double sig_diff = Math.sqrt( sigma * sigma - 0.5 * 0.5 * 4 );
         Double []gaussfilter1D = new Double[(2*radius + 1)];
@@ -592,15 +597,16 @@ public class BuildGaussPry {
         }
     }
 
+
     public static void main(String[] args) throws IOException {
-        SparkConf sparkConf = new SparkConf()
+/*        SparkConf sparkConf = new SparkConf()
                 .setAppName("BuildGaussPry")
                 .set("spark.cores.max","4");
-        final JavaSparkContext ctx = new JavaSparkContext(sparkConf);
+        final JavaSparkContext ctx = new JavaSparkContext(sparkConf);*/
 
         int radius = 5;//高斯模糊半径
 
-        BufferedImage bimg = ImageIO.read(new File("car2.jpg"));//原始图片
+        BufferedImage bimg = ImageIO.read(new File("dataset_500k/car2.jpg"));//原始图片
 
         Integer intvls = 3;//高斯塔每组的层数 （实际为3+3层）
 
@@ -623,8 +629,8 @@ public class BuildGaussPry {
         long startMili = System.currentTimeMillis();
 
         /*build gaussian pry*/
-        Double[] sigma = CreateSigma(ctx,intvls);//初始化尺度参数
-        CreateInitImg(ctx,img_pry[0],sigma[0],radius);//初始化高斯塔最底层的图片
+        Double[] sigma = CreateSigma(intvls);//初始化尺度参数
+        CreateInitImg(img_pry[0],sigma[0],radius);//初始化高斯塔最底层的图片
 
         SavePicPixel("init_imgmes/init_img.txt",img_pry[0],"FLOAT");//保存init_img
 
@@ -642,7 +648,7 @@ public class BuildGaussPry {
         System.out.println("keypoints:" + vkeys.size());
 
         for (int i = 0; i < vkeys.size(); i++) {
-            System.out.println(vkeys.get(i).y + "," + vkeys.get(i).x);
+            System.out.println(vkeys.get(i).x + "," + vkeys.get(i).y);
         }
     }
 }
