@@ -1,9 +1,9 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 /**
  * Created by root on 17-2-22.
  */
-public class RenderHints {
+public class SpRenderHints {
     /**
      * Different approaches to drawing
      */
@@ -21,19 +21,19 @@ public class RenderHints {
     /**
      * Fast drawing
      */
-    public static final RenderHints FAST = new RenderHints(DrawingAlgorithm.FAST);
+    public static final SpRenderHints FAST = new SpRenderHints(DrawingAlgorithm.FAST);
 
     /**
      * Anti-aliased drawing
      */
-    public static final RenderHints ANTI_ALIASED = new RenderHints(DrawingAlgorithm.ANTI_ALIASED);
+    public static final SpRenderHints ANTI_ALIASED = new SpRenderHints(DrawingAlgorithm.ANTI_ALIASED);
 
     protected DrawingAlgorithm drawingAlgorithm = DrawingAlgorithm.FAST;
 
     /**
      * Default constructor. Uses fastest drawing algorithm.
      */
-    public RenderHints() {
+    public SpRenderHints() {
 
     }
 
@@ -41,7 +41,7 @@ public class RenderHints {
      * Construct with the given drawing algorithm
      * @param drawingAlgorithm the drawing algorithm
      */
-    public RenderHints(DrawingAlgorithm drawingAlgorithm) {
+    public SpRenderHints(DrawingAlgorithm drawingAlgorithm) {
         this.drawingAlgorithm = drawingAlgorithm;
     }
 

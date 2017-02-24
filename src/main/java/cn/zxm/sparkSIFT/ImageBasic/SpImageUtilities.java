@@ -1,6 +1,4 @@
-package cn.zxm.sparkSIFT;
-
-import org.openimaj.image.MBFImage;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -13,18 +11,18 @@ import java.io.InputStream;
 /**
  * Created by root on 17-2-23.
  */
-public class ImageUtilities {
+public class SpImageUtilities {
     /**
-     * Reads an {@link SpImage} from the given input stream.
+     * Reads an {@link SpFImage} from the given input stream.
      *
      * @param input
-     *            The input stream to read the {@link SpImage} from.
-     * @return An {@link SpImage}
+     *            The input stream to read the {@link SpFImage} from.
+     * @return An {@link SpFImage}
      * @throws IOException
      *             if the stream cannot be read
      */
-    public static SpImage readF(final InputStream input) throws IOException {
-        return ImageUtilities.createFImage(ExtendedImageIO.read(input));
+    public static SpFImage readF(final InputStream input) throws IOException {
+        return SpImageUtilities.createFImage(SpExtendedImageIO.read(input));
     }
 
     /**
@@ -34,11 +32,11 @@ public class ImageUtilities {
      *            the image
      * @return an FImage representation of the input image
      */
-    public static SpImage createFImage(final BufferedImage image) {
-        final BufferedImage bimg = ImageUtilities.createWorkingImage(image);
+    public static SpFImage createFImage(final BufferedImage image) {
+        final BufferedImage bimg = SpImageUtilities.createWorkingImage(image);
         final int[] data = bimg.getRGB(0, 0, bimg.getWidth(), bimg.getHeight(), null, 0, bimg.getWidth());
 
-        return new SpImage(data, bimg.getWidth(), bimg.getHeight());
+        return new SpFImage(data, bimg.getWidth(), bimg.getHeight());
     }
 
     /**
@@ -69,8 +67,8 @@ public class ImageUtilities {
     // Static initialisation
     static {
         BYTE_TO_FLOAT_LUT = new float[256];
-        for (int i = 0; i < ImageUtilities.BYTE_TO_FLOAT_LUT.length; i++)
-            ImageUtilities.BYTE_TO_FLOAT_LUT[i] = i / 255f;
+        for (int i = 0; i < SpImageUtilities.BYTE_TO_FLOAT_LUT.length; i++)
+            SpImageUtilities.BYTE_TO_FLOAT_LUT[i] = i / 255f;
     }
 
 
@@ -81,9 +79,9 @@ public class ImageUtilities {
      *            image to convert
      * @return BufferedImage representation
      */
-    public static BufferedImage createBufferedImageForDisplay(final Image<?, ?> img) {
+    public static BufferedImage createBufferedImageForDisplay(final SpImage<?, ?> img) {
 
-            return ImageUtilities.createBufferedImage((SpImage) img);
+            return SpImageUtilities.createBufferedImage((SpFImage) img);
     }
 
     /**
@@ -94,8 +92,8 @@ public class ImageUtilities {
      *            the image to convert
      * @return the converted image
      */
-    public static BufferedImage createBufferedImage(final SpImage img) {
-        return ImageUtilities.createBufferedImage(img, null);
+    public static BufferedImage createBufferedImage(final SpFImage img) {
+        return SpImageUtilities.createBufferedImage(img, null);
     }
 
     /**
@@ -108,7 +106,7 @@ public class ImageUtilities {
      *            BufferedImage to draw into if possible. Can be null.
      * @return the converted image
      */
-    public static BufferedImage createBufferedImage(final SpImage img, BufferedImage ret) {
+    public static BufferedImage createBufferedImage(final SpFImage img, BufferedImage ret) {
         final int width = img.getWidth();
         final int height = img.getHeight();
 

@@ -1,6 +1,6 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.DisplayBasic;
 
-import org.openimaj.image.MBFImage;
+import cn.zxm.sparkSIFT.ImageBasic.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,7 +12,7 @@ import java.util.Arrays;
 /**
  * Created by root on 17-2-23.
  */
-public class DisplayUtilities {
+public class SpDisplayUtilities {
 
 
 
@@ -26,10 +26,10 @@ public class DisplayUtilities {
      *            the image
      * @return frame containing the image
      */
-    public static JFrame display(final Image<?, ?> image)
+    public static JFrame display(final cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> image)
     {
-        return DisplayUtilities.display(image, "Image: "
-                + DisplayUtilities.windowCount);
+        return SpDisplayUtilities.display(image, "Image: "
+                + SpDisplayUtilities.windowCount);
     }
 
     /**
@@ -43,7 +43,7 @@ public class DisplayUtilities {
      */
     public static JFrame display(final BufferedImage image, final String title)
     {
-        return DisplayUtilities.display(image, title, null);
+        return SpDisplayUtilities.display(image, title, null);
     }
 
     /**
@@ -55,10 +55,10 @@ public class DisplayUtilities {
      *            the title
      * @return frame containing the image
      */
-    public static JFrame display(final Image<?, ?> image, final String title)
+    public static JFrame display(final cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> image, final String title)
     {
-        return DisplayUtilities.display(
-                ImageUtilities.createBufferedImageForDisplay(image), title, image);
+        return SpDisplayUtilities.display(
+                SpImageUtilities.createBufferedImageForDisplay(image), title, image);
     }
 
     /**
@@ -73,12 +73,12 @@ public class DisplayUtilities {
      * @return frame containing the image
      */
     public static JFrame display(final BufferedImage image,
-                                 final String title, final Image<?, ?> originalImage)
+                                 final String title, final cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> originalImage)
     {
         if (GraphicsEnvironment.isHeadless())
             return null;
 
-        return DisplayUtilities.makeDisplayFrame(title, image.getWidth(),
+        return SpDisplayUtilities.makeDisplayFrame(title, image.getWidth(),
                 image.getHeight(), image, originalImage);
     }
 
@@ -96,7 +96,7 @@ public class DisplayUtilities {
             MouseListener, MouseMotionListener
     {
         /** The original image being displayed. Used for pixel interrogation */
-        protected Image<?, ?> originalImage;
+        protected cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> originalImage;
 
         /** The image being displayed */
         protected BufferedImage image;
@@ -573,7 +573,7 @@ public class DisplayUtilities {
 
                     // If we have the original image we get each of the bands
                     // from it and update the current pixel colour member
-                    if (this.originalImage instanceof SpImage)
+                    if (this.originalImage instanceof SpFImage)
                     {
                         final Object o = this.originalImage.getPixel(this.pixelX, this.pixelY);
                         this.currentPixelColour = new Float[1];
@@ -693,7 +693,7 @@ public class DisplayUtilities {
          * @param image
          *            The original image.
          */
-        public void setOriginalImage(final Image<?, ?> image)
+        public void setOriginalImage(final cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> image)
         {
             this.originalImage = image;
         }
@@ -717,9 +717,9 @@ public class DisplayUtilities {
      */
     public static JFrame makeDisplayFrame(final String title, final int width,
                                           final int height, final BufferedImage img,
-                                          final Image<?, ?> originalImage)
+                                          final cn.zxm.sparkSIFT.ImageBasic.SpImage<?, ?> originalImage)
     {
-        final JFrame f = DisplayUtilities.makeFrame(title);
+        final JFrame f = SpDisplayUtilities.makeFrame(title);
 
         final ImageComponent c = new ImageComponent();
         if (img != null){
@@ -733,7 +733,7 @@ public class DisplayUtilities {
         f.pack();
         f.setVisible(img != null);
 
-        DisplayUtilities.windowCount++;
+        SpDisplayUtilities.windowCount++;
 
         return f;
     }
@@ -756,7 +756,7 @@ public class DisplayUtilities {
             @Override
             public void windowClosing(final WindowEvent evt)
             {
-                DisplayUtilities.windowOpenCount = DisplayUtilities.windowCount - 1;
+                SpDisplayUtilities.windowOpenCount = SpDisplayUtilities.windowCount - 1;
                 f.dispose();
             }
         });

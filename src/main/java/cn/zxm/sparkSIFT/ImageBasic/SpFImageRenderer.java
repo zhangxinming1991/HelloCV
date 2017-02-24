@@ -1,4 +1,4 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import org.openimaj.math.geometry.line.Line2d;
 import org.openimaj.math.geometry.point.Point2d;
@@ -8,9 +8,9 @@ import org.openimaj.math.geometry.shape.Polygon;
 /**
  * Created by root on 17-2-22.
  */
-public class SpImageRenderer extends ImageRenderer<Float, SpImage> {
+public class SpFImageRenderer extends SpImageRenderer<Float, SpFImage> {
 
-    public SpImageRenderer(final SpImage targetImage) {
+    public SpFImageRenderer(final SpFImage targetImage) {
         super(targetImage);
     }
 
@@ -22,7 +22,7 @@ public class SpImageRenderer extends ImageRenderer<Float, SpImage> {
      * @param hints
      *            the render hints
      */
-    public SpImageRenderer(final SpImage targetImage, final RenderHints hints) {
+    public SpFImageRenderer(final SpFImage targetImage, final SpRenderHints hints) {
         super(targetImage, hints);
     }
 

@@ -19,9 +19,11 @@ object SimpleMatch {
 
   def main(args: Array[String]) {
 
-    //val query: MBFImage = ImageUtilities.readMBF(new File("dataset_500k/car2.jpg"))
-    val query = ImageUtilities.readF(new File("dataset_500k/car2.jpg"))
-    //val target: MBFImage = ImageUtilities.readMBF(new File("215600.jpg"))
+    val query: MBFImage = ImageUtilities.readMBF(new File("dataset_500k/car2.jpg"))
+    val target: MBFImage = ImageUtilities.readMBF(new File("dataset_500k/car1.jpg"))
+
+    /*val query = ImageUtilities.readF(new File("dataset_500k/car2.jpg"))
+    val target = ImageUtilities.readF(new File("dataset_500k/car21jpg"))*/
 
     /*val spark = SparkSession
       .builder
@@ -61,20 +63,18 @@ object SimpleMatch {
 
     sc.stop()*/
 
-    DisplayUtilities.display(query)
+    val engine = new DoGSIFTEngine()
+    val querykps = engine.findFeatures(query.flatten())
+    val targetkps = engine.findFeatures(target.flatten())
 
-/*val engine = new DoGSIFTEngine()
-val querykps = engine.findFeatures(query)
-val taetkps = engine.findFeatures(target.flatten())
+    val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
+    val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
 
-val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
-val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
+    matcher.setModelFeatures(querykps)
+    matcher.findMatches(targetkps)
 
-matcher.setModelFeatures(querykps)
-matcher.findMatches(targetkps)
-
-val basicMatches: MBFImage = MatchingUtilities.drawMatches(query, target, matcher.getMatches, RGBColour.RED)
-DisplayUtilities.display(basicMatches)*/
+    val basicMatches = MatchingUtilities.drawMatches(query,target,matcher.getMatches,RGBColour.RED)
+    DisplayUtilities.display(basicMatches)
 }
 
 }

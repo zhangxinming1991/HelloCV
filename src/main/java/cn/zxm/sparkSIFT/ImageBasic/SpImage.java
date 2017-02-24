@@ -1,11 +1,9 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import Jama.Matrix;
 import org.openimaj.image.analyser.PixelAnalyser;
 import org.openimaj.image.pixel.Pixel;
 import org.openimaj.image.processor.PixelProcessor;
-import org.openimaj.image.typography.Font;
-import org.openimaj.image.typography.FontStyle;
 import org.openimaj.math.geometry.path.Path2d;
 import org.openimaj.math.geometry.point.Point2d;
 import org.openimaj.math.geometry.shape.Polygon;
@@ -14,14 +12,13 @@ import org.openimaj.math.geometry.shape.Shape;
 
 
 import java.io.Serializable;
-import java.text.AttributedString;
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * Created by root on 17-2-22.
  */
-public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Serializable, ImageProvider<I>{
+public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, Serializable, SpImageProvider<I> {
     public enum Field {
         /**
          * Odd field
@@ -38,31 +35,31 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
 
     /**
      * Set all pixels to their absolute values, so that all pixel values in the
-     * image will be greater than zero.
+     * SpImage will be greater than zero.
      *
-     * @return The image with absolute values
+     * @return The SpImage with absolute values
      */
     public abstract I abs();
 
     /**
-     * Adds the given image to this image and return new image.
+     * Adds the given SpImage to this SpImage and return new SpImage.
      *
      * @param im
-     *            The image to add
-     * @return A new image that is the sum of this image and the given image.
+     *            The SpImage to add
+     * @return A new SpImage that is the sum of this SpImage and the given SpImage.
      */
-    public I add(Image<?, ?> im) {
+    public I add(SpImage<?, ?> im) {
         final I newImage = this.clone();
         newImage.addInplace(im);
         return newImage;
     }
 
     /**
-     * Add a value to each pixel and return new image.
+     * Add a value to each pixel and return new SpImage.
      *
      * @param num
      *            The value to add to each pixel
-     * @return A new image that is the sum of this image and the given value.
+     * @return A new SpImage that is the sum of this SpImage and the given value.
      */
     public I add(Q num) {
         final I newImage = this.clone();
@@ -71,26 +68,26 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
     }
 
     /**
-     * Add the given image to this image (side-affects this image).
+     * Add the given SpImage to this SpImage (side-affects this SpImage).
      *
      * @param im
-     *            The image to add to this image
-     * @return A reference to this image.
+     *            The SpImage to add to this SpImage
+     * @return A reference to this SpImage.
      */
-    public abstract I addInplace(Image<?, ?> im);
+    public abstract I addInplace(SpImage<?, ?> im);
 
     /**
-     * Add a scalar to each pixel in this image (side-affects this image).
+     * Add a scalar to each pixel in this SpImage (side-affects this SpImage).
      *
      * @param num
-     *            The value to add to every pixel in this image.
-     * @return A reference to this image.
+     *            The value to add to every pixel in this SpImage.
+     * @return A reference to this SpImage.
      */
     public abstract I addInplace(Q num);
 
 
     /**
-     * Analyse this image with a {@link PixelAnalyser}.
+     * Analyse this SpImage with a {@link PixelAnalyser}.
      *
      * @param analyser
      *            The analyser to analyse with.
@@ -107,7 +104,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
     }
 
     /**
-     * Analyse this image with the given {@link PixelAnalyser}, only analysing
+     * Analyse this SpImage with the given {@link PixelAnalyser}, only analysing
      * those pixels where the mask is non-zero.
      *
      * @param mask
@@ -117,7 +114,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *
      * @see PixelAnalyser#analysePixel(Object)
      */
-    public void analyseWithMasked(SpImage mask, PixelAnalyser<Q> analyser) {
+    public void analyseWithMasked(SpFImage mask, PixelAnalyser<Q> analyser) {
         analyser.reset();
 
         for (int y = 0; y < getHeight(); y++) {
@@ -131,62 +128,62 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
 
     /**
      * Sets any pixels that are below <code>min</code> to zero or above
-     * <code>max</code> to the highest normal value that the image allows
+     * <code>max</code> to the highest normal value that the SpImage allows
      * (usually 1 for floating-point images). This method may side-affect this
-     * image.
+     * SpImage.
      *
      * @param min
      *            The minimum value
      * @param max
      *            The maximum value
-     * @return The clipped image.
+     * @return The clipped SpImage.
      */
     public abstract I clip(Q min, Q max);
 
     /**
      * Set all values greater than the given value to the highest normal value
-     * that the image allows (usually 1 for floating-point images). This method
-     * may side-affect this image.
+     * that the SpImage allows (usually 1 for floating-point images). This method
+     * may side-affect this SpImage.
      *
      * @param thresh
      *            The value over which pixels are clipped to zero.
-     * @return The clipped image.
+     * @return The clipped SpImage.
      */
     public abstract I clipMax(Q thresh);
 
     /**
      * Set all values less than the given value to zero. This method may
-     * side-affect this image.
+     * side-affect this SpImage.
      *
      * @param thresh
      *            The value below which pixels are clipped to zero.
-     * @return The clipped image.
+     * @return The clipped SpImage.
      */
     public abstract I clipMin(Q thresh);
 
     /**
-     * Deep copy of an image (internal image buffers copied).
+     * Deep copy of an SpImage (internal SpImage buffers copied).
      *
-     * @return A copy of this image.
+     * @return A copy of this SpImage.
      */
     @Override
     public abstract I clone();
 
     /**
-     * Create a {@link ImageRenderer} capable of drawing into this image.
+     * Create a {@link SpImageRenderer} capable of drawing into this SpImage.
      *
      * @return the renderer
      */
-    public abstract ImageRenderer<Q, I> createRenderer();
+    public abstract SpImageRenderer<Q, I> createRenderer();
 
     /**
-     * Create a {@link ImageRenderer} capable of drawing into this image.
+     * Create a {@link SpImageRenderer} capable of drawing into this SpImage.
      *
      * @param options
      *            Options for the renderer
      * @return the renderer
      */
-    public abstract ImageRenderer<Q, I> createRenderer(RenderHints options);
+    public abstract SpImageRenderer<Q, I> createRenderer(SpRenderHints options);
 
     /**
      * Get the default foreground colour.
@@ -219,14 +216,14 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
     }
 
     /**
-     * Divide each pixel of the image by corresponding pixel in the given image.
-     * This method should return a new image.
+     * Divide each pixel of the SpImage by corresponding pixel in the given SpImage.
+     * This method should return a new SpImage.
      *
      * @param im
-     *            image The image to divide this image by.
-     * @return A new image containing the result.
+     *            SpImage The SpImage to divide this SpImage by.
+     * @return A new SpImage containing the result.
      */
-    public I divide(Image<?, ?> im) {
+    public I divide(SpImage<?, ?> im) {
         final I newImage = this.clone();
         newImage.divideInplace(im);
         return newImage;
@@ -254,7 +251,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            image The image to divide this image by.
      * @return A reference to this image containing the result.
      */
-    public abstract I divideInplace(Image<?, ?> im);
+    public abstract I divideInplace(SpImage<?, ?> im);
 
     /**
      * Divide each pixel of the image by the given scalar value. This method
@@ -1119,7 +1116,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            The image to multiply with this one
      * @return A new image containing the result.
      */
-    public I multiply(Image<?, ?> im) {
+    public I multiply(SpImage<?, ?> im) {
         final I newImage = this.clone();
         newImage.multiplyInplace(im);
         return newImage;
@@ -1146,7 +1143,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            The image to multiply with this image.
      * @return A reference to this image.
      */
-    public abstract I multiplyInplace(Image<?, ?> im);
+    public abstract I multiplyInplace(SpImage<?, ?> im);
 
     /**
      * Multiply each pixel of this by the given scalar. This method side-affects
@@ -1276,7 +1273,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
         final I clone = this.clone();
         final I hflip = clone.clone().flipX();
 
-        final ImageRenderer<Q, I> rend = out.createRenderer();
+        final SpImageRenderer<Q, I> rend = out.createRenderer();
         rend.drawImage(clone, paddingLeft, paddingTop);
 
         // left
@@ -1354,7 +1351,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            The {@link PixelProcessor} to apply.
      * @return A new image containing the result.
      */
-    public I processMasked(SpImage mask, PixelProcessor<Q> p) {
+    public I processMasked(SpFImage mask, PixelProcessor<Q> p) {
         final I newImage = this.clone();
         newImage.processMaskedInplace(mask, p);
         return newImage;
@@ -1371,7 +1368,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      * @return A reference to this image containing the result.
      */
     @SuppressWarnings("unchecked")
-    public I processMaskedInplace(SpImage mask, PixelProcessor<Q> p) {
+    public I processMaskedInplace(SpFImage mask, PixelProcessor<Q> p) {
         for (int y = 0; y < getHeight(); y++) {
             for (int x = 0; x < getWidth(); x++) {
                 if (mask.pixels[y][x] == 0)
@@ -1403,7 +1400,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            The image to subtract from this image.
      * @return A new image containing the result.
      */
-    public I subtract(Image<?, ?> im) {
+    public I subtract(SpImage<?, ?> im) {
         final I newImage = this.clone();
         newImage.subtractInplace(im);
         return newImage;
@@ -1431,7 +1428,7 @@ public abstract class Image<Q, I extends Image<Q, I>> implements Cloneable, Seri
      *            The image to subtract from this image.
      * @return A reference to this containing the result.
      */
-    public abstract I subtractInplace(Image<?, ?> im);
+    public abstract I subtractInplace(SpImage<?, ?> im);
 
     /**
      * Subtract a scalar from every pixel value in this image. Side-affects this

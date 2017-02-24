@@ -1,8 +1,16 @@
 package cn.zxm.scala.snImageDeal
 
 import java.io.{File, FileInputStream}
-
-import cn.zxm.sparkSIFT.{DisplayUtilities, ImageUtilities}
+import cn.zxm.sparkSIFT.DisplayBasic.SpDisplayUtilities
+import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
+import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import org.openimaj.feature.local.matcher.{MatchingUtilities, FastBasicKeypointMatcher, LocalFeatureMatcher}
+import org.openimaj.feature.local.matcher.consistent.ConsistentLocalFeatureMatcher2d
+import org.openimaj.image.{DisplayUtilities, ImageUtilities}
+import org.openimaj.image.colour.RGBColour
+import org.openimaj.image.feature.local.keypoints.Keypoint
+import org.openimaj.math.geometry.transforms.estimation.RobustAffineTransformEstimator
+import org.openimaj.math.model.fit.RANSAC
 
 /**
   * Created by root on 17-2-23.
@@ -10,9 +18,26 @@ import cn.zxm.sparkSIFT.{DisplayUtilities, ImageUtilities}
 object MySimpleMatch {
 
   def main(args: Array[String]) {
-    val query = ImageUtilities.readF(new FileInputStream(new File("dataset_500k/car2.jpg")))
+    //val query = SpImageUtilities.readF(new FileInputStream(new File("dataset_500k/car2.jpg")))
+    val querymbf = ImageUtilities.readMBF(new FileInputStream(new File("dataset_500k/car2.jpg")))
+    val tgmbf = ImageUtilities.readMBF(new FileInputStream(new File("dataset_500k/car1.jpg")))
+    //val partImg = ImageSegment.GetOnePart(query,0,0,93,151)
 
-    DisplayUtilities.display(query)
+    //SpDisplayUtilities.display(query)
+
+    val engine = new SpDoGSIFTEngine()
+    val querykps = engine.findFeatures(querymbf.flatten())
+    val tgkps = engine.findFeatures(tgmbf.flatten())
+
+    val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
+    val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
+
+    matcher.setModelFeatures(querykps)
+    matcher.findMatches(tgkps)
+
+    val basicMatches = MatchingUtilities.drawMatches(querymbf,tgmbf,matcher.getMatches,RGBColour.RED)
+    DisplayUtilities.display(basicMatches)
+
   }
 
 }

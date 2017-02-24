@@ -1,4 +1,4 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import Jama.Matrix;
 import org.apache.log4j.Logger;
@@ -15,12 +15,12 @@ import java.util.Comparator;
 /**
  * Created by root on 17-2-22.
  */
-public class SpImage extends SingleBandImage<Float,SpImage> {
+public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
 
     private static final long serialVersionUID = 1L;
 
     /** The logging class */
-    protected static Logger logger = Logger.getLogger(SpImage.class);
+    protected static Logger logger = Logger.getLogger(SpFImage.class);
 
     /**
      * The default number of sigmas at which the Gaussian function is truncated
@@ -32,7 +32,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     public float pixels[][];
 
     /**
-     * Create an {@link SpImage} from an array of floating point values with the
+     * Create an {@link SpFImage} from an array of floating point values with the
      * given width and height. The length of the array must equal the width
      * multiplied by the height.
      *
@@ -43,7 +43,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @param height
      *            The height of th resulting image.
      */
-    public SpImage(final float[] array, final int width, final int height)
+    public SpFImage(final float[] array, final int width, final int height)
     {
         assert (array.length == width * height);
 
@@ -57,7 +57,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * Create an {@link SpImage} from an array of double values with the given
+     * Create an {@link SpFImage} from an array of double values with the given
      * width and height. The length of the array must equal the width multiplied
      * by the height. The values will be downcast to floats.
      *
@@ -68,7 +68,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @param height
      *            The height of th resulting image.
      */
-    public SpImage(final double[] array, final int width, final int height)
+    public SpFImage(final double[] array, final int width, final int height)
     {
         assert (array.length == width * height);
 
@@ -82,7 +82,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * Create an {@link SpImage} from an array of double values with the given
+     * Create an {@link SpFImage} from an array of double values with the given
      * width and height. The length of the array must equal the width multiplied
      * by the height. The values will be downcast to floats.
      *
@@ -95,7 +95,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @param offset
      *            The offset in the array to begin reading from
      */
-    public SpImage(final double[] array, final int width, final int height, int offset)
+    public SpFImage(final double[] array, final int width, final int height, int offset)
     {
         assert (array.length == width * height);
 
@@ -109,12 +109,12 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * Create an {@link SpImage} from an array of floating point values.
+     * Create an {@link SpFImage} from an array of floating point values.
      *
      * @param array
      *            the array representing pixel values to copy data from.
      */
-    public SpImage(final float[][] array)
+    public SpFImage(final float[][] array)
     {
         this.pixels = array;
         this.height = array.length;
@@ -122,14 +122,14 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * Create an empty {@link SpImage} of the given size.
+     * Create an empty {@link SpFImage} of the given size.
      *
      * @param width
      *            image width (number of columns)
      * @param height
      *            image height (number of rows)
      */
-    public SpImage(final int width, final int height) {
+    public SpFImage(final int width, final int height) {
         this.pixels = new float[height][width];
 
         this.height = height;
@@ -137,7 +137,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * Construct an {@link SpImage} from an array of packed ARGB integers.
+     * Construct an {@link SpFImage} from an array of packed ARGB integers.
      *
      * @param data
      *            array of packed ARGB pixels
@@ -146,7 +146,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @param height
      *            the image height
      */
-    public SpImage(final int[] data, final int width, final int height) {
+    public SpFImage(final int[] data, final int width, final int height) {
         this.internalAssign(data, width, height);
     }
 
@@ -156,7 +156,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#abs()
      */
     @Override
-    public SpImage abs() {
+    public SpFImage abs() {
         for (int r = 0; r < this.height; r++)
             for (int c = 0; c < this.width; c++)
                 this.pixels[r][c] = Math.abs(this.pixels[r][c]);
@@ -164,25 +164,25 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     @Override
-    public SpImageRenderer createRenderer() {
-        return new SpImageRenderer(this);
+    public SpFImageRenderer createRenderer() {
+        return new SpFImageRenderer(this);
     }
 
     @Override
-    public SpImageRenderer createRenderer(final RenderHints options) {
-        return new SpImageRenderer(this, options);
+    public SpFImageRenderer createRenderer(final SpRenderHints options) {
+        return new SpFImageRenderer(this, options);
     }
 
     /**
-     * Returns a new {@link SpImage} that contains the pixels of this image
+     * Returns a new {@link SpFImage} that contains the pixels of this image
      * increased by the given value. {@inheritDoc}
      *
      * @see org.openimaj.image.Image#add(java.lang.Object)
      */
     @Override
-    public SpImage add(final Float num)
+    public SpFImage add(final Float num)
     {
-        final SpImage newImage = new SpImage(this.width, this.height);
+        final SpFImage newImage = new SpFImage(this.width, this.height);
         final float fnum = num;
 
         for (int r = 0; r < this.height; r++)
@@ -194,18 +194,18 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
 
     /**
      * {@inheritDoc} This method throws an {@link UnsupportedOperationException}
-     * if the given image is not an {@link SpImage}.
+     * if the given image is not an {@link SpFImage}.
      *
      * @see org.openimaj.image.Image#add(org.openimaj.image.Image)
      * @exception UnsupportedOperationException
      *                if an unsupported type is added
-     * @return a reference to this {@link SpImage}
+     * @return a reference to this {@link SpFImage}
      */
     @Override
-    public SpImage add(final Image<?, ?> im)
+    public SpFImage add(final SpImage<?, ?> im)
     {
-        if (im instanceof SpImage)
-            return this.add((SpImage) im);
+        if (im instanceof SpFImage)
+            return this.add((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -216,7 +216,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#addInplace(java.lang.Object)
      */
     @Override
-    public SpImage addInplace(final Float num)
+    public SpFImage addInplace(final Float num)
     {
         final float fnum = num;
         for (int r = 0; r < this.height; r++)
@@ -228,18 +228,18 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
 
     /**
      * {@inheritDoc} This method throws an {@link UnsupportedOperationException}
-     * if the given image is not an {@link SpImage}.
+     * if the given image is not an {@link SpFImage}.
      *
      * @see org.openimaj.image.Image#addInplace(org.openimaj.image.Image)
      * @exception UnsupportedOperationException
      *                if an unsupported type is added
-     * @return a reference to this {@link SpImage}
+     * @return a reference to this {@link SpFImage}
      */
     @Override
-    public SpImage addInplace(final Image<?, ?> im)
+    public SpFImage addInplace(final SpImage<?, ?> im)
     {
-        if (im instanceof SpImage)
-            return this.addInplace((SpImage) im);
+        if (im instanceof SpFImage)
+            return this.addInplace((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -250,7 +250,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#clip(java.lang.Object, java.lang.Object)
      */
     @Override
-    public SpImage clip(final Float min, final Float max)
+    public SpFImage clip(final Float min, final Float max)
     {
         int r, c;
 
@@ -274,7 +274,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#clipMax(java.lang.Object)
      */
     @Override
-    public SpImage clipMax(final Float thresh)
+    public SpFImage clipMax(final Float thresh)
     {
         final float fthresh = thresh;
         for (int r = 0; r < this.height; r++)
@@ -294,7 +294,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#clipMin(java.lang.Object)
      */
     @Override
-    public SpImage clipMin(final Float thresh)
+    public SpFImage clipMin(final Float thresh)
     {
         final float fthresh = thresh;
         for (int r = 0; r < this.height; r++)
@@ -314,9 +314,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.SingleBandImage#clone()
      */
     @Override
-    public SpImage clone()
+    public SpFImage clone()
     {
-        final SpImage cpy = new SpImage(this.width, this.height);
+        final SpFImage cpy = new SpFImage(this.width, this.height);
         int r;
 
         for (r = 0; r < this.height; r++)
@@ -332,7 +332,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#divideInplace(java.lang.Object)
      */
     @Override
-    public SpImage divideInplace(final Float val)
+    public SpFImage divideInplace(final Float val)
     {
         final float fval = val;
 
@@ -351,7 +351,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @return this image
      * @see org.openimaj.image.Image#divideInplace(java.lang.Object)
      */
-    public SpImage divideInplace(final float fval)
+    public SpFImage divideInplace(final float fval)
     {
         for (int y = 0; y < this.height; y++)
             for (int x = 0; x < this.width; x++)
@@ -366,10 +366,10 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#divideInplace(org.openimaj.image.Image)
      */
     @Override
-    public SpImage divideInplace(final Image<?, ?> im)
+    public SpFImage divideInplace(final SpImage<?, ?> im)
     {
-        if (im instanceof SpImage)
-            return this.divideInplace((SpImage) im);
+        if (im instanceof SpFImage)
+            return this.divideInplace((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -381,7 +381,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *      org.openimaj.image.Image)
      */
     @Override
-    public SpImage extractROI(final int x, final int y, final SpImage out)
+    public SpFImage extractROI(final int x, final int y, final SpFImage out)
     {
         for (int r = y, rr = 0; rr < out.height; r++, rr++)
         {
@@ -403,9 +403,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#extractROI(int, int, int, int)
      */
     @Override
-    public SpImage extractROI(final int x, final int y, final int w, final int h)
+    public SpFImage extractROI(final int x, final int y, final int w, final int h)
     {
-        final SpImage out = new SpImage(w, h);
+        final SpFImage out = new SpFImage(w, h);
 
         for (int r = y, rr = 0; rr < h; r++, rr++)
         {
@@ -427,7 +427,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.SingleBandImage#fill(java.lang.Comparable)
      */
     @Override
-    public SpImage fill(final Float colour)
+    public SpFImage fill(final Float colour)
     {
         for (int r = 0; r < this.height; r++)
             for (int c = 0; c < this.width; c++)
@@ -444,7 +444,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @return the image
      * @see org.openimaj.image.SingleBandImage#fill(java.lang.Comparable)
      */
-    public SpImage fill(final float colour)
+    public SpFImage fill(final float colour)
     {
         for (int r = 0; r < this.height; r++)
             for (int c = 0; c < this.width; c++)
@@ -501,9 +501,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#getField(org.openimaj.image.Image.Field)
      */
     @Override
-    public SpImage getField(final Field f)
+    public SpFImage getField(final Field f)
     {
-        final SpImage img = new SpImage(this.width, this.height / 2);
+        final SpFImage img = new SpFImage(this.width, this.height / 2);
 
         int r, r2, c;
         final int init = (f.equals(Field.ODD) ? 1 : 0);
@@ -524,9 +524,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#getFieldCopy(org.openimaj.image.Image.Field)
      */
     @Override
-    public SpImage getFieldCopy(final Field f)
+    public SpFImage getFieldCopy(final Field f)
     {
-        final SpImage img = new SpImage(this.width, this.height);
+        final SpFImage img = new SpFImage(this.width, this.height);
 
         int r, c;
         for (r = 0; r < this.height; r += 2)
@@ -555,9 +555,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#getFieldInterpolate(org.openimaj.image.Image.Field)
      */
     @Override
-    public SpImage getFieldInterpolate(final Field f)
+    public SpFImage getFieldInterpolate(final Field f)
     {
-        final SpImage img = new SpImage(this.width, this.height);
+        final SpFImage img = new SpFImage(this.width, this.height);
 
         int r, c;
         for (r = 0; r < this.height; r += 2)
@@ -797,7 +797,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#internalAssign(org.openimaj.image.Image)
      */
     @Override
-    public SpImage internalCopy(final SpImage im)
+    public SpFImage internalCopy(final SpFImage im)
     {
         final int h = im.height;
         final int w = im.width;
@@ -815,7 +815,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#internalAssign(org.openimaj.image.Image)
      */
     @Override
-    public SpImage internalAssign(final SpImage im)
+    public SpFImage internalAssign(final SpFImage im)
     {
         this.pixels = im.pixels;
         this.height = im.height;
@@ -831,7 +831,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *      height)
      */
     @Override
-    public SpImage internalAssign(final int[] data, final int width, final int height) {
+    public SpFImage internalAssign(final int[] data, final int width, final int height) {
         if (this.height != height || this.width != width) {
             this.height = height;
             this.width = width;
@@ -850,7 +850,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
                 // This improves keypoint detection for some reason!
                 final float fpix = 0.299f * red + 0.587f * green + 0.114f * blue;
 
-                this.pixels[y][x] = ImageUtilities.BYTE_TO_FLOAT_LUT[(int) fpix];
+                this.pixels[y][x] = SpImageUtilities.BYTE_TO_FLOAT_LUT[(int) fpix];
             }
         }
         return this;
@@ -862,7 +862,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#inverse()
      */
     @Override
-    public SpImage inverse()
+    public SpFImage inverse()
     {
         int r, c;
         final float max = this.max();
@@ -968,7 +968,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#multiply(java.lang.Object)
      */
     @Override
-    public SpImage multiply(final Float num)
+    public SpFImage multiply(final Float num)
     {
         return super.multiply(num);
     }
@@ -979,7 +979,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#multiplyInplace(java.lang.Object)
      */
     @Override
-    public SpImage multiplyInplace(final Float num)
+    public SpFImage multiplyInplace(final Float num)
     {
         final float fnum = num;
         for (int r = 0; r < this.height; r++)
@@ -1001,7 +1001,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @return this image
      * @see org.openimaj.image.Image#multiplyInplace(java.lang.Object)
      */
-    public SpImage multiplyInplace(final float fnum)
+    public SpFImage multiplyInplace(final float fnum)
     {
         for (int r = 0; r < this.height; r++)
         {
@@ -1017,17 +1017,17 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     /**
      * {@inheritDoc} This method will throw an
      * {@link UnsupportedOperationException} if the input input is not an
-     * {@link SpImage}.
+     * {@link SpFImage}.
      *
      * @see org.openimaj.image.Image#multiplyInplace(org.openimaj.image.Image)
      * @throws UnsupportedOperationException
-     *             if the given image is not an {@link SpImage}
+     *             if the given image is not an {@link SpFImage}
      */
     @Override
-    public SpImage multiplyInplace(final Image<?, ?> im)
+    public SpFImage multiplyInplace(final SpImage<?, ?> im)
     {
-        if (im instanceof SpImage)
-            return this.multiplyInplace((SpImage) im);
+        if (im instanceof SpFImage)
+            return this.multiplyInplace((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -1035,13 +1035,13 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     /**
      * {@inheritDoc}
      *
-     * @return A new {@link SpImage}
+     * @return A new {@link SpFImage}
      * @see org.openimaj.image.Image#newInstance(int, int)
      */
     @Override
-    public SpImage newInstance(final int width, final int height)
+    public SpFImage newInstance(final int width, final int height)
     {
-        return new SpImage(width, height);
+        return new SpFImage(width, height);
     }
 
     /**
@@ -1050,7 +1050,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#normalise()
      */
     @Override
-    public SpImage normalise()
+    public SpFImage normalise()
     {
         final float min = this.min();
         final float max = this.max();
@@ -1070,13 +1070,13 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * {@inheritDoc} This method has been overridden in {@link SpImage} for
+     * {@inheritDoc} This method has been overridden in {@link SpFImage} for
      * performance.
      *
      * @see org.openimaj.image.Image#processInplace(org.openimaj.image.processor.PixelProcessor)
      */
     @Override
-    public SpImage processInplace(final PixelProcessor<Float> p)
+    public SpFImage processInplace(final PixelProcessor<Float> p)
     {
         for (int y = 0; y < this.height; y++)
         {
@@ -1090,7 +1090,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     /**
-     * {@inheritDoc} This method has been overridden in {@link SpImage} for
+     * {@inheritDoc} This method has been overridden in {@link SpFImage} for
      * performance.
      *
      * @see org.openimaj.image.Image#analyseWith(org.openimaj.image.analyser.PixelAnalyser)
@@ -1126,9 +1126,9 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#subtract(java.lang.Object)
      */
     @Override
-    public SpImage subtract(final Float num)
+    public SpFImage subtract(final Float num)
     {
-        final SpImage newImage = new SpImage(this.width, this.height);
+        final SpFImage newImage = new SpFImage(this.width, this.height);
 
         for (int r = 0; r < this.height; r++)
         {
@@ -1142,17 +1142,17 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
 
     /**
      * {@inheritDoc} Throws an {@link UnsupportedOperationException} if the
-     * given image is not an {@link SpImage}.
+     * given image is not an {@link SpFImage}.
      *
      * @see org.openimaj.image.Image#subtract(org.openimaj.image.Image)
      * @throws UnsupportedOperationException
-     *             if the given image is not an {@link SpImage}.
+     *             if the given image is not an {@link SpFImage}.
      */
     @Override
-    public SpImage subtract(final Image<?, ?> input)
+    public SpFImage subtract(final SpImage<?, ?> input)
     {
-        if (input instanceof SpImage)
-            return this.subtract((SpImage) input);
+        if (input instanceof SpFImage)
+            return this.subtract((SpFImage) input);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -1164,7 +1164,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#subtractInplace(java.lang.Object)
      */
     @Override
-    public SpImage subtractInplace(final Float num)
+    public SpFImage subtractInplace(final Float num)
     {
         final float fnum = num;
         for (int r = 0; r < this.height; r++)
@@ -1184,10 +1184,10 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#subtractInplace(org.openimaj.image.Image)
      */
     @Override
-    public SpImage subtractInplace(final Image<?, ?> im)
+    public SpFImage subtractInplace(final SpImage<?, ?> im)
     {
-        if (im instanceof SpImage)
-            return this.subtractInplace((SpImage) im);
+        if (im instanceof SpFImage)
+            return this.subtractInplace((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
     }
@@ -1198,7 +1198,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#threshold(java.lang.Object)
      */
     @Override
-    public SpImage threshold(final Float thresh)
+    public SpFImage threshold(final Float thresh)
     {
         final float fthresh = thresh;
         for (int r = 0; r < this.height; r++)
@@ -1317,7 +1317,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#transform(Jama.Matrix)
      */
     @Override
-    public SpImage transform(final Matrix transform) {
+    public SpFImage transform(final Matrix transform) {
         return super.transform(transform);
     }
 
@@ -1327,7 +1327,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @see org.openimaj.image.Image#zero()
      */
     @Override
-    public SpImage zero()
+    public SpFImage zero()
     {
         for (int r = 0; r < this.height; r++)
         {
@@ -1341,10 +1341,10 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
 
     @Override
     public boolean equals(final Object o) {
-        if (!(o instanceof SpImage)) {
+        if (!(o instanceof SpFImage)) {
             return false;
         }
-        return this.equalsThresh((SpImage) o, 0);
+        return this.equalsThresh((SpFImage) o, 0);
     }
 
     /**
@@ -1358,8 +1358,8 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      * @return true images are the same size and if all pixel values have a
      *         difference less than threshold; false otherwise.
      */
-    public boolean equalsThresh(final SpImage o, final float thresh) {
-        final SpImage that = o;
+    public boolean equalsThresh(final SpFImage o, final float thresh) {
+        final SpFImage that = o;
         if (that.height != this.height || that.width != this.width)
             return false;
         for (int i = 0; i < this.height; i++) {
@@ -1442,11 +1442,11 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *            height of images
      * @return array of newly initialised images
      */
-    public static SpImage[] createArray(final int num, final int width, final int height) {
-        final SpImage[] array = new SpImage[num];
+    public static SpFImage[] createArray(final int num, final int width, final int height) {
+        final SpFImage[] array = new SpFImage[num];
 
         for (int i = 0; i < num; i++) {
-            array[i] = new SpImage(width, height);
+            array[i] = new SpFImage(width, height);
         }
 
         return array;
@@ -1466,7 +1466,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     @Override
-    public SpImage flipX() {
+    public SpFImage flipX() {
         final int hwidth = this.width / 2;
 
         for (int y = 0; y < this.height; y++) {
@@ -1483,7 +1483,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     @Override
-    public SpImage flipY() {
+    public SpFImage flipY() {
         final int hheight = this.height / 2;
 
         for (int y = 0; y < hheight; y++) {
@@ -1514,7 +1514,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *            The location to draw the image
      * @return This image with the overlay on it
      */
-    public SpImage overlayInplace(final SpImage img, final SpImage alpha, final int x, final int y)
+    public SpFImage overlayInplace(final SpFImage img, final SpFImage alpha, final int x, final int y)
     {
         final int sx = Math.max(x, 0);
         final int sy = Math.max(y, 0);
@@ -1544,7 +1544,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *      int, int)
      */
     @Override
-    public SpImage overlayInplace(final SpImage image, final int x, final int y)
+    public SpFImage overlayInplace(final SpFImage image, final int x, final int y)
     {
         return this.overlayInplace(image, this.clone().fill(1f), x, y);
     }
@@ -1558,8 +1558,8 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *            the height
      * @return the image
      */
-    public static SpImage randomImage(final int width, final int height) {
-        final SpImage img = new SpImage(width, height);
+    public static SpFImage randomImage(final int width, final int height) {
+        final SpFImage img = new SpFImage(width, height);
 
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
@@ -1569,7 +1569,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     @Override
-    public SpImage replace(Float target, Float replacement) {
+    public SpFImage replace(Float target, Float replacement) {
         return replace((float) target, (float) replacement);
     }
 
@@ -1583,7 +1583,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
      *            the colour to fill the image with
      * @return A reference to this image.
      */
-    public SpImage replace(float target, float replacement) {
+    public SpFImage replace(float target, float replacement) {
         for (int r = 0; r < this.height; r++)
             for (int c = 0; c < this.width; c++)
                 if (this.pixels[r][c] == target)
@@ -1593,7 +1593,7 @@ public class SpImage extends SingleBandImage<Float,SpImage> {
     }
 
     @Override
-    public SpImage extractCentreSubPix(float cx, float cy, SpImage out) {
+    public SpFImage extractCentreSubPix(float cx, float cy, SpFImage out) {
         final int width = out.width;
         final int height = out.height;
         for (int y = 0; y < height; y++) {

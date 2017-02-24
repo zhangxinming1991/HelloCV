@@ -1,4 +1,4 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import com.caffeineowl.graphics.bezier.BezierUtils;
 import com.caffeineowl.graphics.bezier.CubicSegmentConsumer;
@@ -23,8 +23,8 @@ import java.util.List;
 /**
  * Created by root on 17-2-22.
  */
-public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
-    protected RenderHints hints;
+public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
+    protected SpRenderHints hints;
     protected I targetImage;
 
     /**
@@ -33,8 +33,8 @@ public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
      * @param targetImage
      *            the target image.
      */
-    public ImageRenderer(final I targetImage) {
-        this(targetImage, new RenderHints());
+    public SpImageRenderer(final I targetImage) {
+        this(targetImage, new SpRenderHints());
     }
 
     /**
@@ -45,7 +45,7 @@ public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
      * @param hints
      *            the render hints
      */
-    public ImageRenderer(final I targetImage, final RenderHints hints) {
+    public SpImageRenderer(final I targetImage, final SpRenderHints hints) {
         this.targetImage = targetImage;
         this.hints = hints;
     }
@@ -419,7 +419,7 @@ public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
             ScanRasteriser.scanFill(p.points, new ScanRasteriser.ScanLineListener() {
                 @Override
                 public void process(final int x1, final int x2, final int y) {
-                    ImageRenderer.this.drawHorizLine(x1, x2, y, col);
+                    SpImageRenderer.this.drawHorizLine(x1, x2, y, col);
                 }
             });
         } else {
@@ -636,7 +636,7 @@ public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
      *
      * @return the render hints
      */
-    public RenderHints getRenderHints() {
+    public SpRenderHints getRenderHints() {
         return this.hints;
     }
 
@@ -646,7 +646,7 @@ public abstract class ImageRenderer <Q, I extends Image<Q, I>>{
      * @param hints
      *            the new hints
      */
-    public void setRenderHints(final RenderHints hints) {
+    public void setRenderHints(final SpRenderHints hints) {
         this.hints = hints;
     }
 

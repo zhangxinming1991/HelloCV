@@ -1,11 +1,11 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 /**
  * Created by root on 17-2-22.
  */
-public abstract class SingleBandImage<Q extends Comparable<Q>, I extends SingleBandImage<Q, I>>
+public abstract class SpSingleBandImage<Q extends Comparable<Q>, I extends SpSingleBandImage<Q, I>>
         extends
-        Image<Q, I> {
+        SpImage<Q, I> {
     private static final long serialVersionUID = 1L;
 
     /** The image height */

@@ -1,4 +1,4 @@
-package cn.zxm.sparkSIFT;
+package cn.zxm.sparkSIFT.ImageBasic;
 
 import com.sun.media.jai.codec.SeekableStream;
 import org.apache.sanselan.ImageFormat;
@@ -21,7 +21,7 @@ import java.util.Iterator;
 /**
  * Created by root on 17-2-23.
  */
-public class ExtendedImageIO {
+public class SpExtendedImageIO {
 
     static class NonClosableInputStream extends BufferedInputStream {
         public NonClosableInputStream(InputStream in) {
