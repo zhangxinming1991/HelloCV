@@ -1,31 +1,24 @@
 package cn.zxm.sparkSIFT.SIFT;
 
+import cn.zxm.sparkSIFT.FeatureLocal.SpDominantOrientationExtractor;
+import cn.zxm.sparkSIFT.FeatureLocal.SpOrientationHistogramExtractor;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
 import org.openimaj.feature.local.list.LocalFeatureList;
-import org.openimaj.image.FImage;
-import org.openimaj.image.analysis.pyramid.gaussian.GaussianOctave;
-import org.openimaj.image.analysis.pyramid.gaussian.GaussianPyramid;
+
 import org.openimaj.image.feature.local.descriptor.gradient.SIFTFeatureProvider;
-import org.openimaj.image.feature.local.detector.dog.collector.Collector;
-import org.openimaj.image.feature.local.detector.dog.collector.OctaveKeypointCollector;
-import org.openimaj.image.feature.local.detector.dog.extractor.DominantOrientationExtractor;
-import org.openimaj.image.feature.local.detector.dog.extractor.GradientFeatureExtractor;
-import org.openimaj.image.feature.local.detector.dog.extractor.OrientationHistogramExtractor;
-import org.openimaj.image.feature.local.detector.dog.pyramid.DoGOctaveExtremaFinder;
-import org.openimaj.image.feature.local.detector.pyramid.BasicOctaveExtremaFinder;
-import org.openimaj.image.feature.local.detector.pyramid.OctaveInterestPointFinder;
 import org.openimaj.image.feature.local.keypoints.Keypoint;
 
 /**
  * Created by root on 17-2-23.
  */
-public class SpDoGSIFTEngine implements SpEngine<Keypoint, FImage> {
-    SpDoGSIFTEngineOptions<FImage> options;
+public class SpDoGSIFTEngine implements SpEngine<Keypoint, SpFImage> {
+    SpDoGSIFTEngineOptions<SpFImage> options;
 
     /**
      * Construct a DoGSIFTEngine with the default options.
      */
     public SpDoGSIFTEngine() {
-        this(new SpDoGSIFTEngineOptions<FImage>());
+        this(new SpDoGSIFTEngineOptions<SpFImage>());
     }
 
     /**
@@ -34,22 +27,22 @@ public class SpDoGSIFTEngine implements SpEngine<Keypoint, FImage> {
      * @param options
      *            the options
      */
-    public SpDoGSIFTEngine(SpDoGSIFTEngineOptions<FImage> options) {
+    public SpDoGSIFTEngine(SpDoGSIFTEngineOptions<SpFImage> options) {
         this.options = options;
     }
 
 
     @Override
-    public LocalFeatureList<Keypoint> findFeatures(FImage image) {
-        final OctaveInterestPointFinder<GaussianOctave<FImage>, FImage> finder =
-                new DoGOctaveExtremaFinder(new BasicOctaveExtremaFinder(options.magnitudeThreshold,
+    public LocalFeatureList<Keypoint> findFeatures(SpFImage image) {
+        final SpOctaveInterestPointFinder<SpGaussianOctave<SpFImage>, SpFImage> finder =
+                new SpDoGOctaveExtremaFinder(new SpBasicOctaveExtremaFinder(options.magnitudeThreshold,
                         options.eigenvalueRatio));
 
-        final Collector<GaussianOctave<FImage>, Keypoint, FImage> collector = new OctaveKeypointCollector<FImage>(
-                new GradientFeatureExtractor(
-                        new DominantOrientationExtractor(
+        final SpCollector<SpGaussianOctave<SpFImage>, Keypoint, SpFImage> collector = new SpOctaveKeypointCollector<SpFImage>(
+                new SpGradientFeatureExtractor(
+                        new SpDominantOrientationExtractor(
                                 options.peakThreshold,
-                                new OrientationHistogramExtractor(
+                                new SpOrientationHistogramExtractor(
                                         options.numOriHistBins,
                                         options.scaling,
                                         options.smoothingIterations,
@@ -70,7 +63,7 @@ public class SpDoGSIFTEngine implements SpEngine<Keypoint, FImage> {
 
         options.setOctaveProcessor(finder);
 
-        final GaussianPyramid<FImage> pyr = new GaussianPyramid<FImage>(options);
+        final SpGaussianPyramid<SpFImage> pyr = new SpGaussianPyramid<SpFImage>(options);
         pyr.process(image);
 
         return collector.getFeatures();
@@ -79,7 +72,7 @@ public class SpDoGSIFTEngine implements SpEngine<Keypoint, FImage> {
     /**
      * @return the current options used by the engine
      */
-    public SpDoGSIFTEngineOptions<FImage> getOptions() {
+    public SpDoGSIFTEngineOptions<SpFImage> getOptions() {
         return options;
     }
 

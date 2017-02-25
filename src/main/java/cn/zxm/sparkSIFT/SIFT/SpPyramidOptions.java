@@ -1,14 +1,14 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.FImage;
-import org.openimaj.image.Image;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 
 /**
  * Created by root on 17-2-23.
  */
 public class SpPyramidOptions <OCTAVE extends SpOctave<?,?,IMAGE>,
-        IMAGE extends Image<?,IMAGE> & SinglebandImageProcessor.Processable<Float,FImage,IMAGE>> {
+        IMAGE extends SpImage<?,IMAGE> & SpSinglebandImageProcessor.Processable<Float,SpFImage,IMAGE>> {
 
 
     /**
@@ -49,5 +49,15 @@ public class SpPyramidOptions <OCTAVE extends SpOctave<?,?,IMAGE>,
      */
     public SpPyramidProcessor<IMAGE> getPyramidProcessor() {
         return pyramidProcessor;
+    }
+
+    /**
+     * Get an OctaveProcessor to apply to each octave of the pyramid.
+     * Setting the OctaveProcessor to null disables it.
+     *
+     * @param octaveProcessor the octaveProcessor to set
+     */
+    public void setOctaveProcessor(SpOctaveProcessor<OCTAVE,IMAGE> octaveProcessor) {
+        this.octaveProcessor = octaveProcessor;
     }
 }

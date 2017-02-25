@@ -1,18 +1,19 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.*;
-import org.openimaj.image.analyser.ImageAnalyser;
-import org.openimaj.image.processing.resize.ResizeProcessor;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageAnalyser.SpImageAnalyser;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageProcessing.SpResizeProcessor;
 
 /**
  * Created by root on 17-2-23.
  */
-public class SpGaussianPyramid<I extends org.openimaj.image.Image<?, I> & SinglebandImageProcessor.Processable<Float, FImage, I>>
+public class SpGaussianPyramid<I extends SpImage<?, I> & SpSinglebandImageProcessor.Processable<Float, SpFImage, I>>
         extends
         SpPyramid<SpGaussianPyramidOptions<I>, SpGaussianOctave<I>, I>
         implements
-        ImageAnalyser<I>, Iterable<SpGaussianOctave<I>> {
+        SpImageAnalyser<I>, Iterable<SpGaussianOctave<I>> {
 
     /**
      * Construct a Pyramid with the given options.
@@ -46,7 +47,7 @@ public class SpGaussianPyramid<I extends org.openimaj.image.Image<?, I> & Single
         // twice its original size and the
         I image;
         if (options.doubleInitialImage) {
-            image = ResizeProcessor.doubleSize(img);
+            image = SpResizeProcessor.doubleSize(img);
             octaveSize *= 0.5;
         } else
             image = img.clone();
@@ -81,7 +82,7 @@ public class SpGaussianPyramid<I extends org.openimaj.image.Image<?, I> & Single
 
             // get the image with 2*sigma from the octave and
             // half its size ready for the next octave
-            image = ResizeProcessor.halfSize(currentOctave.getNextOctaveImage());
+            image = SpResizeProcessor.halfSize(currentOctave.getNextOctaveImage());
 
             octaveSize *= 2.0; // the size of the octave increases by a factor
             // of two each iteration

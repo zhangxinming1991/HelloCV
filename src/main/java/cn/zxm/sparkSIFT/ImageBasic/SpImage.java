@@ -3,6 +3,7 @@ package cn.zxm.sparkSIFT.ImageBasic;
 import Jama.Matrix;
 import org.openimaj.image.analyser.PixelAnalyser;
 import org.openimaj.image.pixel.Pixel;
+import org.openimaj.image.processor.GridProcessor;
 import org.openimaj.image.processor.PixelProcessor;
 import org.openimaj.math.geometry.path.Path2d;
 import org.openimaj.math.geometry.point.Point2d;
@@ -1177,7 +1178,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
     public abstract I normalise();
 
     /**
-     * Adds padding as in {@link Image#padding(int, int, Object)}. The padding
+     * Adds padding as in {@link SpImage#padding(int, int, Object)}. The padding
      * colour is the colour of the closest border pixel.
      *
      * @param paddingWidth
@@ -1856,5 +1857,191 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      * @return <code>out</code>
      */
     public abstract I extractCentreSubPix(float cx, float cy, I out);
+
+
+    /**
+     * Process this image with the given {@link GridProcessor} and return new
+     * image containing the result.
+     *
+     * @param p
+     *            {@link GridProcessor} to apply to this image.
+     * @return A new image containing the result.
+     */
+    public I process(SpGridProcessor<Q, I> p) {
+        final int height = p.getVerticalGridElements();
+        final int width = p.getHorizontalGridElements();
+        final I newImage = this.newInstance(width, height);
+        newImage.zero();
+
+        final int gridWidth = getWidth() / width;
+        final int gridHeight = getHeight() / height;
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                newImage.setPixel(x, y,
+                        p.processGridElement(this.extractROI(gridWidth * x, gridHeight * y, gridWidth, gridHeight)));
+
+        return newImage;
+    }
+
+    /**
+     * Process this image with an {@link SpImageProcessor} and return new image
+     * containing the result.
+     *
+     * @param p
+     *            The {@link SpImageProcessor} to apply to this image.
+     * @return A new image containing the result.
+     */
+    public I process(SpImageProcessor<I> p) {
+        final I newImage = this.clone();
+        newImage.processInplace(p);
+        return newImage;
+    }
+
+    /**
+     * Process this image with the given {@link SpKernelProcessor} and return new
+     * image containing the result.
+     *
+     * @param p
+     *            The {@link SpKernelProcessor} to apply.
+     * @return A new image containing the result.
+     */
+    public I process(SpKernelProcessor<Q, I> p) {
+        return process(p, false);
+    }
+
+    /**
+     * Process this image with the given {@link SpKernelProcessor} and return new
+     * image containing the result.
+     *
+     * @param p
+     *            The {@link SpKernelProcessor} to apply.
+     * @param pad
+     *            Should the image be zero padded so the kernel reaches the
+     *            edges of the output
+     * @return A new image containing the result.
+     */
+    public I process(SpKernelProcessor<Q, I> p, boolean pad) {
+        final I newImage = this.clone();
+        newImage.zero();
+
+        final int kh = p.getKernelHeight();
+        final int kw = p.getKernelWidth();
+
+        final int hh = p.getKernelHeight() / 2;
+        final int hw = p.getKernelWidth() / 2;
+
+        final I tmp = newInstance(kw, kh);
+
+        if (!pad) {
+            for (int y = hh; y < getHeight() - (kh - hh); y++) {
+                for (int x = hw; x < getWidth() - (kw - hw); x++) {
+                    newImage.setPixel(x, y, p.processKernel(this.extractROI(x - hw, y - hh, tmp)));
+                }
+            }
+        } else {
+            for (int y = 0; y < getHeight(); y++) {
+                for (int x = 0; x < getWidth(); x++) {
+                    newImage.setPixel(x, y, p.processKernel(this.extractROI(x - hw, y - hh, tmp)));
+                }
+            }
+        }
+
+        return newImage;
+    }
+
+    /**
+     * Process this image with the given {@link PixelProcessor} and return a new
+     * image containing the result.
+     *
+     * @param p
+     *            The {@link PixelProcessor} to apply.
+     * @return A new image containing the result.
+     */
+    public I process(PixelProcessor<Q> p) {
+        final I newImage = this.clone();
+        newImage.processInplace(p);
+        return newImage;
+    }
+
+    /**
+     * Process this image with an {@link SpProcessor} and return new image
+     * containing the result.
+     *
+     * @param p
+     *            The {@link SpProcessor} to apply to this image.
+     * @return A new image containing the result.
+     */
+    public I process(SpProcessor<I> p) {
+        final I newImage = this.clone();
+        newImage.processInplace(p);
+        return newImage;
+    }
+
+    /**
+     * Process this image with the given {@link SpProcessor} side-affecting this
+     * image.
+     *
+     * @param p
+     *            The {@link SpProcessor} to apply.
+     * @return A reference to this image containing the result.
+     */
+    @SuppressWarnings("unchecked")
+    public I processInplace(SpProcessor<I> p) {
+        if (p == null)
+            return (I) this;
+        if (p instanceof SpImageProcessor)
+            return processInplace((SpImageProcessor<I>) p);
+        if (p instanceof SpKernelProcessor)
+            return processInplace((SpKernelProcessor<Q, I>) p);
+        if (p instanceof PixelProcessor)
+            return processInplace((PixelProcessor<Q>) p);
+
+        throw new UnsupportedOperationException("Unsupported Processor type");
+    }
+
+    /**
+     * Process this image with the given {@link SpImageProcessor} side-affecting
+     * this image.
+     *
+     * @param p
+     *            The {@link SpImageProcessor} to apply.
+     * @return A reference to this image containing the result.
+     */
+    @SuppressWarnings("unchecked")
+    public I processInplace(SpImageProcessor<I> p) {
+        p.processImage((I) this);
+        return (I) this;
+    }
+
+    /**
+     * Process this image with the given {@link SpKernelProcessor} side-affecting
+     * this image.
+     *
+     * @param p
+     *            The {@link SpKernelProcessor} to apply.
+     * @return A reference to this image containing the result.
+     */
+    public I processInplace(SpKernelProcessor<Q, I> p) {
+        return processInplace(p, false);
+    }
+
+    /**
+     * Process this image with the given {@link SpKernelProcessor} side-affecting
+     * this image.
+     *
+     * @param p
+     *            The {@link SpKernelProcessor} to apply.
+     * @param pad
+     *            Should the image be zero padded so the kernel reaches the
+     *            edges of the output
+     * @return A reference to this image containing the result.
+     */
+    @SuppressWarnings("unchecked")
+    public I processInplace(SpKernelProcessor<Q, I> p, boolean pad) {
+        final I newImage = process(p, pad);
+        this.internalAssign(newImage);
+        return (I) this;
+    }
+
 
 }

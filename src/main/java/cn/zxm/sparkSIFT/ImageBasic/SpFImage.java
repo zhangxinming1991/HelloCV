@@ -3,6 +3,7 @@ package cn.zxm.sparkSIFT.ImageBasic;
 import Jama.Matrix;
 import org.apache.log4j.Logger;
 //import org.openimaj.image.ImageUtilities;
+import org.openimaj.image.ARGBPlane;
 import org.openimaj.image.analyser.PixelAnalyser;
 import org.openimaj.image.pixel.FValuePixel;
 import org.openimaj.image.pixel.Pixel;
@@ -151,6 +152,49 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
+     * Construct an {@link SpFImage} from an array of packed ARGB integers using
+     * the specified plane.
+     *
+     * @param data
+     *            array of packed ARGB pixels
+     * @param width
+     *            the image width
+     * @param height
+     *            the image height
+     * @param plane
+     *            The {@link ARGBPlane} to copy data from
+     */
+    public SpFImage(final int[] data, final int width, final int height, final ARGBPlane plane) {
+        this.width = width;
+        this.height = height;
+        this.pixels = new float[height][width];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                final int rgb = data[x + y * width];
+
+                int colour = 0;
+                switch (plane)
+                {
+                    case RED:
+                        colour = ((rgb >> 16) & 0xff);
+                        break;
+                    case GREEN:
+                        colour = ((rgb >> 8) & 0xff);
+                        break;
+                    case BLUE:
+                        colour = ((rgb) & 0xff);
+                        break;
+                    default:
+                        break;
+                }
+
+                this.pixels[y][x] = colour;
+            }
+        }
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @see org.openimaj.image.Image#abs()
@@ -163,14 +207,30 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
         return this;
     }
 
-    @Override
-    public SpFImageRenderer createRenderer() {
-        return new SpFImageRenderer(this);
-    }
+    /**
+     * Adds the pixel values of the given {@link SpFImage} to the pixels of this
+     * image. Returns a new {@link SpFImage} and does not affect this image or the
+     * given image. This is a version of {@link SpFImage#add(SpImage)} which takes an
+     * {@link SpFImage}. This method directly accesses the underlying float[][]
+     * and is therefore fast. This function returns a new {@link SpFImage}.
+     *
+     *
+     * @param im
+     *            {@link SpFImage} to add into this one.
+     * @return A new {@link SpFImage}
+     */
+    public SpFImage add(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
 
-    @Override
-    public SpFImageRenderer createRenderer(final SpRenderHints options) {
-        return new SpFImageRenderer(this, options);
+        final SpFImage newImage = new SpFImage(im.width, im.height);
+
+        for (int r = 0; r < im.height; r++)
+            for (int c = 0; c < im.width; c++)
+                newImage.pixels[r][c] = this.pixels[r][c] + im.pixels[r][c];
+
+        return newImage;
     }
 
     /**
@@ -208,6 +268,29 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
             return this.add((SpFImage) im);
         else
             throw new UnsupportedOperationException("Unsupported Type");
+    }
+
+    /***
+     * Adds the given image pixel values to the pixel values of this image.
+     * Version of {@link SpImage#addInplace(SpImage)} which takes an {@link SpFImage}.
+     * This directly accesses the underlying float[][] and is therefore fast.
+     * This function side-affects the pixels in this {@link SpFImage}.
+     *
+     * @see SpImage#addInplace(SpImage)
+     * @param im
+     *            the FImage to add
+     * @return a reference to this
+     */
+    public SpFImage addInplace(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        for (int r = 0; r < im.height; r++)
+            for (int c = 0; c < im.width; c++)
+                this.pixels[r][c] += im.pixels[r][c];
+
+        return this;
     }
 
     /**
@@ -325,6 +408,68 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
         return cpy;
     }
 
+    @Override
+    public SpFImageRenderer createRenderer() {
+        return new SpFImageRenderer(this);
+    }
+
+    @Override
+    public SpFImageRenderer createRenderer(final SpRenderHints options) {
+        return new SpFImageRenderer(this, options);
+    }
+
+    /**
+     * Divides the pixels values of this image with the values from the given
+     * image. This is a version of {@link SpImage#divide(SpImage)} which takes an
+     * {@link SpFImage}. This directly accesses the underlying float[][] and is
+     * therefore fast. This function returns a new {@link SpFImage}.
+     *
+     * @see SpImage#divide(SpImage)
+     * @param im
+     *            the {@link SpFImage} to be the denominator.
+     * @return A new {@link SpFImage}
+     */
+    public SpFImage divide(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        final SpFImage newImage = new SpFImage(im.width, im.height);
+        int r, c;
+
+        for (r = 0; r < im.height; r++)
+            for (c = 0; c < im.width; c++)
+                newImage.pixels[r][c] = this.pixels[r][c] / im.pixels[r][c];
+
+        return newImage;
+    }
+
+    /**
+     * Divides the pixel values of this image with the values from the given
+     * image. This is a version of {@link SpImage#divideInplace(SpImage)} which
+     * takes an {@link SpFImage}. This directly accesses the underlying float[][]
+     * and is therefore fast. This function side-affects this image.
+     *
+     * @see SpImage#divideInplace(SpImage)
+     * @param im
+     *            the {@link SpFImage} to be the denominator
+     * @return a reference to this {@link SpFImage}
+     */
+    public SpFImage divideInplace(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        for (int y = 0; y < this.height; y++)
+        {
+            for (int x = 0; x < this.width; x++)
+            {
+                this.pixels[y][x] /= im.pixels[y][x];
+            }
+        }
+
+        return this;
+    }
 
     /**
      * {@inheritDoc}
@@ -826,9 +971,6 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
 
     /**
      * {@inheritDoc}
-     *
-     * @see org.openimaj.image.Image#internalAssign(int [] data, int width, int
-     *      height)
      */
     @Override
     public SpFImage internalAssign(final int[] data, final int width, final int height) {
@@ -974,6 +1116,33 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
+     * Multiplies this image's pixel values by the corresponding pixel values in
+     * the given image side-affecting this image. This is a version of
+     * {@link SpImage#multiplyInplace(SpImage)} which takes an {@link SpFImage}. This
+     * directly accesses the underlying float[][] and is therefore fast. This
+     * function works inplace.
+     *
+     * @param im
+     *            the {@link SpFImage} to multiply with this image
+     * @return a reference to this image
+     */
+    public SpFImage multiplyInplace(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        for (int r = 0; r < this.height; r++)
+        {
+            for (int c = 0; c < this.width; c++)
+            {
+                this.pixels[r][c] *= im.pixels[r][c];
+            }
+        }
+
+        return this;
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @see org.openimaj.image.Image#multiplyInplace(java.lang.Object)
@@ -1070,6 +1239,52 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @see org.openimaj.image.SingleBandImage#process(org.openimaj.image.processor.KernelProcessor)
+     */
+    @Override
+    public SpFImage process(final SpKernelProcessor<Float, SpFImage> p) {
+        return this.process(p, false);
+    }
+
+    /**
+     * {@inheritDoc} This method has been overridden in {@link SpFImage} for
+     * performance.
+     *
+     * @see org.openimaj.image.SingleBandImage#process(org.openimaj.image.processor.KernelProcessor,
+     *      boolean)
+     */
+    @Override
+    public SpFImage process(final SpKernelProcessor<Float, SpFImage> p, final boolean pad)
+    {
+        final SpFImage newImage = new SpFImage(this.width, this.height);
+        final int kh = p.getKernelHeight();
+        final int kw = p.getKernelWidth();
+
+        final SpFImage tmp = new SpFImage(kw, kh);
+
+        final int hh = kh / 2;
+        final int hw = kw / 2;
+
+        if (!pad) {
+            for (int y = hh; y < this.height - (kh - hh); y++) {
+                for (int x = hw; x < this.width - (kw - hw); x++) {
+                    newImage.pixels[y][x] = p.processKernel(this.extractROI(x - hw, y - hh, tmp));
+                }
+            }
+        } else {
+            for (int y = 0; y < this.height; y++) {
+                for (int x = 0; x < this.width; x++) {
+                    newImage.pixels[y][x] = p.processKernel(this.extractROI(x - hw, y - hh, tmp));
+                }
+            }
+        }
+
+        return newImage;
+    }
+
+    /**
      * {@inheritDoc} This method has been overridden in {@link SpFImage} for
      * performance.
      *
@@ -1121,6 +1336,28 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
+     * Subtracts the given {@link SpFImage} from this image returning a new image
+     * containing the result.
+     *
+     * @param im
+     *            The image to subtract from this image.
+     * @return A new image containing the result.
+     */
+    public SpFImage subtract(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        final SpFImage newImage = new SpFImage(im.width, im.height);
+        int r, c;
+
+        for (r = 0; r < im.height; r++)
+            for (c = 0; c < im.width; c++)
+                newImage.pixels[r][c] = this.pixels[r][c] - im.pixels[r][c];
+        return newImage;
+    }
+
+    /**
      * {@inheritDoc}
      *
      * @see org.openimaj.image.Image#subtract(java.lang.Object)
@@ -1157,6 +1394,31 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
             throw new UnsupportedOperationException("Unsupported Type");
     }
 
+    /**
+     * Subtracts (pixel-by-pixel) the given {@link SpFImage} from this image.
+     * Side-affects this image.
+     *
+     * @param im
+     *            The {@link SpFImage} to subtract from this image.
+     * @return A reference to this image containing the result.
+     */
+    public SpFImage subtractInplace(final SpFImage im)
+    {
+        if (!SpImageUtilities.checkSameSize(this, im))
+            throw new AssertionError("images must be the same size");
+
+        float pix1[][], pix2[][];
+        int r, c;
+
+        pix1 = this.pixels;
+        pix2 = im.pixels;
+
+        for (r = 0; r < this.height; r++)
+            for (c = 0; c < this.width; c++)
+                pix1[r][c] -= pix2[r][c];
+
+        return this;
+    }
 
     /**
      * {@inheritDoc}
@@ -1432,7 +1694,7 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
-     * Convenience method to initialise an array of SpImages
+     * Convenience method to initialise an array of FImages
      *
      * @param num
      *            array length
@@ -1464,6 +1726,15 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
         }
         return sum;
     }
+
+    /**
+     *
+     *
+     * @return a new RGB colour image.
+     */
+  /*  public MBFImage toRGB() {
+        return new MBFImage(ColourSpace.RGB, this.clone(), this.clone(), this.clone());
+    }*/
 
     @Override
     public SpFImage flipX() {
@@ -1605,4 +1876,5 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
         }
         return out;
     }
+
 }

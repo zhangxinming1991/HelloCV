@@ -1,15 +1,14 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.*;
-import org.openimaj.image.analysis.pyramid.gaussian.GaussianOctave;
-import org.openimaj.image.analysis.pyramid.gaussian.GaussianPyramid;
-import org.openimaj.image.processing.convolution.FGaussianConvolve;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
+
 
 /**
  * Created by root on 17-2-23.
  */
-public class SpGaussianPyramidOptions <IMAGE extends org.openimaj.image.Image<?, IMAGE> & SinglebandImageProcessor.Processable<Float, FImage, IMAGE>>
+public class SpGaussianPyramidOptions <IMAGE extends SpImage<?, IMAGE> & SpSinglebandImageProcessor.Processable<Float, SpFImage, IMAGE>>
         extends
         SpPyramidOptions<SpGaussianOctave<IMAGE>, IMAGE> {
 
@@ -50,9 +49,9 @@ public class SpGaussianPyramidOptions <IMAGE extends org.openimaj.image.Image<?,
     }
 
     /**
-     * Create a {@link SinglebandImageProcessor} that performs a Gaussian
+     * Create a {@link SpSinglebandImageProcessor} that performs a Gaussian
      * blurring with a standard deviation given by sigma. This method is used by
-     * the {@link GaussianOctave} and {@link GaussianPyramid} to create filters
+     * the {@link SpGaussianOctave} and {@link SpGaussianPyramid} to create filters
      * for performing the blurring. By overriding in subclasses, you can control
      * the exact filter implementation (i.e. for speed).
      *
@@ -60,8 +59,8 @@ public class SpGaussianPyramidOptions <IMAGE extends org.openimaj.image.Image<?,
      *            the gaussian standard deviation
      * @return the image processor to apply the blur
      */
-    public SinglebandImageProcessor<Float, FImage> createGaussianBlur(float sigma) {
-        return new FGaussianConvolve(sigma);
+    public SpSinglebandImageProcessor<Float, SpFImage> createGaussianBlur(float sigma) {
+        return new SpFGaussianConvolve(sigma);
     }
 
     /**
@@ -72,6 +71,37 @@ public class SpGaussianPyramidOptions <IMAGE extends org.openimaj.image.Image<?,
      */
     public int getBorderPixels() {
         return borderPixels;
+    }
+
+    /**
+     * Get the number of scales in this octave minus extraScaleSteps. Levels of
+     * each octave are constructed so that level[scales] has twice the sigma of
+     * level[0].
+     *
+     * @return the scales
+     */
+    public int getScales() {
+        return scales;
+    }
+
+    /**
+     * Get the number of extra scale steps taken beyond scales.
+     *
+     * @see #getScales()
+     *
+     * @return the extraScaleSteps
+     */
+    public int getExtraScaleSteps() {
+        return extraScaleSteps;
+    }
+
+    /**
+     * Get the assumed initial scale of the first image in each octave.
+     *
+     * @return the initialSigma
+     */
+    public float getInitialSigma() {
+        return initialSigma;
     }
 
 }

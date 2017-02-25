@@ -1,6 +1,8 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.*;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 import org.openimaj.image.processor.SinglebandImageProcessor;
 
 import java.lang.reflect.Array;
@@ -8,7 +10,7 @@ import java.lang.reflect.Array;
 /**
  * Created by root on 17-2-23.
  */
-public class SpGaussianOctave<IMAGE extends org.openimaj.image.Image<?, IMAGE> & SinglebandImageProcessor.Processable<Float, FImage, IMAGE>>
+public class SpGaussianOctave<IMAGE extends SpImage<?, IMAGE> & SpSinglebandImageProcessor.Processable<Float, SpFImage, IMAGE>>
         extends
         SpOctave<SpGaussianPyramidOptions<IMAGE>, SpGaussianPyramid<IMAGE>, IMAGE> {
 

@@ -97,6 +97,31 @@ public class SpImageUtilities {
     }
 
     /**
+     * Checks whether the width and height of all the given images match.
+     *
+     * @param images
+     *            The images to compare sizes.
+     * @return TRUE if all the images are the same size; FALSE otherwise
+     */
+    protected static boolean checkSameSize(final SpImage<?, ?>... images) {
+        if (images == null || images.length == 0)
+            return true;
+
+        final SpImage<?, ?> image = images[0];
+        final int w = image.getWidth();
+        final int h = image.getHeight();
+
+        return SpImageUtilities.checkSize(h, w, images);
+    }
+
+    protected static boolean checkSize(final int h, final int w, final SpImage<?, ?>... images) {
+        for (final SpImage<?, ?> image : images)
+            if (image.getHeight() != h || image.getWidth() != w)
+                return false;
+        return true;
+    }
+
+    /**
      * Efficiently create a TYPE_BYTE_GRAY for display. This is typically much
      * faster than to create and display than an ARGB buffered image.
      *

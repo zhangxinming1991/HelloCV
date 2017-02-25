@@ -1,7 +1,8 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.*;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 
 /**
  * Created by root on 17-2-23.
@@ -10,8 +11,8 @@ public interface SpOctaveProcessor<
         OCTAVE extends
                 SpOctave<?,?,IMAGE>,
         IMAGE extends
-                org.openimaj.image.Image<?,IMAGE> &
-                SinglebandImageProcessor.Processable<Float,FImage,IMAGE>
+                SpImage<?,IMAGE> &
+                SpSinglebandImageProcessor.Processable<Float,SpFImage,IMAGE>
         >{
     /**
      * Process the provided octave.

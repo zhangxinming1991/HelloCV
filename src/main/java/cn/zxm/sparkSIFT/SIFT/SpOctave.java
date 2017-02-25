@@ -1,8 +1,8 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.Image;
-import org.openimaj.image.FImage;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 import org.openimaj.util.array.ArrayIterator;
 
 import java.util.Iterator;
@@ -13,7 +13,7 @@ import java.util.Iterator;
 public abstract class SpOctave
         <OPTIONS extends SpPyramidOptions<?, IMAGE>,
         PYRAMID extends SpPyramid<OPTIONS,?,IMAGE>,
-        IMAGE extends Image<?,IMAGE> & SinglebandImageProcessor.Processable<Float,FImage,IMAGE>>
+        IMAGE extends SpImage<?,IMAGE> & SpSinglebandImageProcessor.Processable<Float,SpFImage,IMAGE>>
         implements
         Iterable<IMAGE> {
     /** The options used for the pyramid construction */

@@ -1,9 +1,10 @@
 package cn.zxm.sparkSIFT.SIFT;
 
-import org.openimaj.image.*;
-import org.openimaj.image.analyser.ImageAnalyser;
+import cn.zxm.sparkSIFT.ImageAnalyser.SpImageAnalyser;
+import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpImage;
+import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 import org.openimaj.image.analysis.pyramid.PyramidOptions;
-import org.openimaj.image.processor.SinglebandImageProcessor;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,9 +16,9 @@ import java.util.List;
 public abstract class SpPyramid <
         OPTIONS extends SpPyramidOptions<OCTAVE,IMAGE>,
         OCTAVE extends SpOctave<OPTIONS,?,IMAGE>,
-        IMAGE extends org.openimaj.image.Image<?,IMAGE> & SinglebandImageProcessor.Processable<Float,FImage,IMAGE>>
+        IMAGE extends SpImage<?,IMAGE> & SpSinglebandImageProcessor.Processable<Float,SpFImage,IMAGE>>
         implements
-        ImageAnalyser<IMAGE>, Iterable<OCTAVE> {
+        SpImageAnalyser<IMAGE>, Iterable<OCTAVE> {
 
     /**
      * Options for the pyramid
