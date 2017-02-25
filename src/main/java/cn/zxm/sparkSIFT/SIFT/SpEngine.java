@@ -1,13 +1,14 @@
 package cn.zxm.sparkSIFT.SIFT;
 
 import cn.zxm.sparkSIFT.ImageBasic.SpImage;
-import org.openimaj.feature.local.LocalFeature;
-import org.openimaj.feature.local.list.LocalFeatureList;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeature;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeatureList;
+
 
 /**
  * Created by root on 17-2-23.
  */
-public interface SpEngine <FEATURE extends LocalFeature<?, ?>, IMAGE extends SpImage<?, IMAGE>>{
+public interface SpEngine <FEATURE extends SpLocalFeature<?, ?>, IMAGE extends SpImage<?, IMAGE>>{
     /**
      * Find local features in the given image and return them.
      *
@@ -15,5 +16,5 @@ public interface SpEngine <FEATURE extends LocalFeature<?, ?>, IMAGE extends SpI
      *            the image
      * @return the features.
      */
-    public LocalFeatureList<FEATURE> findFeatures(IMAGE image);
+    public SpLocalFeatureList<FEATURE> findFeatures(IMAGE image);
 }

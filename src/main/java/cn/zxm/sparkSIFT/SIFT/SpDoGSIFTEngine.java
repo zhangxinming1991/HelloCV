@@ -3,15 +3,17 @@ package cn.zxm.sparkSIFT.SIFT;
 import cn.zxm.sparkSIFT.FeatureLocal.SpDominantOrientationExtractor;
 import cn.zxm.sparkSIFT.FeatureLocal.SpOrientationHistogramExtractor;
 import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
-import org.openimaj.feature.local.list.LocalFeatureList;
+//import org.openimaj.feature.local.list.LocalFeatureList;
 
+import cn.zxm.sparkSIFT.imageKeyPoint.SpKeypoint;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeatureList;
 import org.openimaj.image.feature.local.descriptor.gradient.SIFTFeatureProvider;
-import org.openimaj.image.feature.local.keypoints.Keypoint;
+//import org.openimaj.image.feature.local.keypoints.Keypoint;
 
 /**
  * Created by root on 17-2-23.
  */
-public class SpDoGSIFTEngine implements SpEngine<Keypoint, SpFImage> {
+public class SpDoGSIFTEngine implements SpEngine<SpKeypoint, SpFImage> {
     SpDoGSIFTEngineOptions<SpFImage> options;
 
     /**
@@ -33,12 +35,12 @@ public class SpDoGSIFTEngine implements SpEngine<Keypoint, SpFImage> {
 
 
     @Override
-    public LocalFeatureList<Keypoint> findFeatures(SpFImage image) {
+    public SpLocalFeatureList<SpKeypoint> findFeatures(SpFImage image) {
         final SpOctaveInterestPointFinder<SpGaussianOctave<SpFImage>, SpFImage> finder =
                 new SpDoGOctaveExtremaFinder(new SpBasicOctaveExtremaFinder(options.magnitudeThreshold,
                         options.eigenvalueRatio));
 
-        final SpCollector<SpGaussianOctave<SpFImage>, Keypoint, SpFImage> collector = new SpOctaveKeypointCollector<SpFImage>(
+        final SpCollector<SpGaussianOctave<SpFImage>, SpKeypoint, SpFImage> collector = new SpOctaveKeypointCollector<SpFImage>(
                 new SpGradientFeatureExtractor(
                         new SpDominantOrientationExtractor(
                                 options.peakThreshold,

@@ -6,6 +6,7 @@ import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
 import cn.zxm.sparkSIFT.SIFT.SpAbstractOctaveLocalFeatureCollector;
 import cn.zxm.sparkSIFT.SIFT.SpGaussianOctave;
 import cn.zxm.sparkSIFT.SIFT.SpOctaveInterestPointFinder;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpKeypoint;
 import org.openimaj.feature.OrientedFeatureVector;
 import org.openimaj.image.feature.local.keypoints.Keypoint;
 
@@ -18,7 +19,7 @@ public class SpOctaveKeypointCollector<
         SpAbstractOctaveLocalFeatureCollector<
                         SpGaussianOctave<IMAGE>,
                         SpScaleSpaceFeatureExtractor<OrientedFeatureVector, IMAGE>,
-                        Keypoint,
+                SpKeypoint,
                         IMAGE
                         > {
 
@@ -49,7 +50,7 @@ public class SpOctaveKeypointCollector<
         OrientedFeatureVector[] fvs = featureExtractor.extractFeature(extractionProperties);
 
         for (OrientedFeatureVector fv : fvs) {
-            features.add(new Keypoint(imx, imy, fv.orientation, imscale, fv.values));
+            features.add(new SpKeypoint(imx, imy, fv.orientation, imscale, fv.values));
         }
     }
 

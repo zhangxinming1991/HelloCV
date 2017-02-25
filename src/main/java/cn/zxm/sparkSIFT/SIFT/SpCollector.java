@@ -3,14 +3,13 @@ package cn.zxm.sparkSIFT.SIFT;
 import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
 import cn.zxm.sparkSIFT.ImageBasic.SpImage;
 import cn.zxm.sparkSIFT.ImageBasic.SpSinglebandImageProcessor;
-import org.openimaj.feature.local.LocalFeature;
-import org.openimaj.feature.local.list.LocalFeatureList;
-import org.openimaj.image.processor.SinglebandImageProcessor;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeature;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeatureList;
 
 /**
  * Created by root on 17-2-24.
  */
-public interface SpCollector <OCTAVE extends SpOctave<?, ?, IMAGE>, FEATURE extends LocalFeature<?, ?>, IMAGE extends SpImage<?, IMAGE> & SpSinglebandImageProcessor.Processable<Float, SpFImage, IMAGE>>
+public interface SpCollector <OCTAVE extends SpOctave<?, ?, IMAGE>, FEATURE extends SpLocalFeature<?, ?>, IMAGE extends SpImage<?, IMAGE> & SpSinglebandImageProcessor.Processable<Float, SpFImage, IMAGE>>
         extends
         SpOctaveInterestPointListener<OCTAVE, IMAGE> {
 
@@ -19,5 +18,5 @@ public interface SpCollector <OCTAVE extends SpOctave<?, ?, IMAGE>, FEATURE exte
      *
      * @return the features
      */
-    public LocalFeatureList<FEATURE> getFeatures();
+    public SpLocalFeatureList<FEATURE> getFeatures();
 }
