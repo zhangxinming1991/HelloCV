@@ -4,6 +4,8 @@ import java.io._
 import java.net.{URL, URI}
 
 import cn.zxm.sparkSIFT.HadoopSerializationUtil
+import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
+import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{SequenceFile, IntWritable, BytesWritable, Text}
@@ -77,17 +79,17 @@ object ImagesFeatureEx {
     val dataset_3 = "dataset_200m"
     val dataset_test = "dataset_test"
 
-    val imageSEQ_path = hdfs_htname + imgsqdir + dataset_test + "/*"
-    val kpslib_path = hdfs_htname + kpslibdir + dataset_test + "/" //特征库目录
+    val imageSEQ_path = hdfs_htname + imgsqdir + dataset_2 + "/*"
+    val kpslib_path = hdfs_htname + kpslibdir + dataset_2 + "/" //特征库目录
 
     /*提取图片集合的特征点,建立特征库*/
-    rm_hdfs(hdfs_htname,kpslibdir + dataset_test)
+    rm_hdfs(hdfs_htname,kpslibdir + dataset_2)
     val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],1000).map({case (fname,fcontext) => {
 
       val datainput:InputStream = new ByteArrayInputStream(fcontext.getBytes)
-      val img = ImageUtilities.readMBF(datainput)
-      val engine = new DoGSIFTEngine()
-      val kps = engine.findFeatures(img.flatten())
+      val img = SpImageUtilities.readF(datainput)
+      val engine = new SpDoGSIFTEngine()
+      val kps = engine.findFeatures(img)
 
       var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
       IOUtils.writeBinary(baos, kps)

@@ -1,6 +1,7 @@
 package cn.zxm.sparkSIFT.ImageBasic;
 
 import Jama.Matrix;
+import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 //import org.openimaj.image.ImageUtilities;
 import org.openimaj.image.ARGBPlane;

@@ -1,7 +1,11 @@
 package cn.zxm.scala.sparkImageDeal
 
-import java.io.{File, InputStream, ByteArrayInputStream}
+import java.io.{FileInputStream, File, InputStream, ByteArrayInputStream}
 
+import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
+import cn.zxm.sparkSIFT.ImageMatch.{SpFastBasicKeypointMatcher, SpConsistentLocalFeatureMatcher2d, SpRobustAffineTransformEstimator}
+import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import cn.zxm.sparkSIFT.imageKeyPoint.{SpKeypoint, SpMemoryLocalFeatureList}
 import org.apache.hadoop.io.{BytesWritable, Text}
 import org.apache.spark.{SparkContext, SparkConf}
 import org.openimaj.feature.local.list.{LocalFeatureList, MemoryLocalFeatureList}
@@ -36,7 +40,7 @@ object ImagesFeatureMatch {
 
     val kpslibdir = "/user/root/featureSq/"
 
-    val kpslib_path = hdfs_htname + kpslibdir + dataset_test + "/" //特征库目录
+    val kpslib_path = hdfs_htname + kpslibdir + dataset_2 + "/" //特征库目录
 
     //val testout = "hdfs://simon-Vostro-3905:9000/user/root/testout/" //特征库目录
 
@@ -44,18 +48,18 @@ object ImagesFeatureMatch {
  //   val query_fname = dataset + "/car2.jpg";
  //   val kps_car2 = HadoopSerializationUtil.getKPLFromSequence(new Text(query_fname),kpslib_path)
     val query_path: String = "car2.jpg"
-    val query: MBFImage = ImageUtilities.readMBF(new File(query_path))
-    val engine: DoGSIFTEngine = new DoGSIFTEngine
-    val queryKeypoints: LocalFeatureList[Keypoint] = engine.findFeatures(query.flatten)
+    val query = SpImageUtilities.readF(new FileInputStream(new File(query_path)))
+    val engine = new SpDoGSIFTEngine()
+    val queryKeypoints = engine.findFeatures(query)
     /*设定的图片的特征点集合*/
 
     /*特征点集合间的匹配*/
-    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],5000).map(f => {
-      val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
-      val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
+    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],10).map(f => {
+      val modelFItter = new SpRobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
+      val matcher= new SpConsistentLocalFeatureMatcher2d(new SpFastBasicKeypointMatcher[SpKeypoint](8), modelFItter)
 
       val bis:InputStream = new ByteArrayInputStream(f._2.getBytes)
-      val keypoints = MemoryLocalFeatureList.read(bis,classOf[Keypoint])
+      val keypoints = SpMemoryLocalFeatureList.read(bis,classOf[SpKeypoint])
 
       matcher.setModelFeatures(queryKeypoints)//设置查询模板
 

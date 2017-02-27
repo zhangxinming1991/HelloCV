@@ -1,5 +1,7 @@
 package cn.zxm.sparkSIFT.ImageBasic;
 
+import cn.zxm.sparkSIFT.imageKeyPoint.SpPoint2d;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpPoint2dImpl;
 import com.caffeineowl.graphics.bezier.BezierUtils;
 import com.caffeineowl.graphics.bezier.CubicSegmentConsumer;
 import com.caffeineowl.graphics.bezier.QuadSegmentConsumer;
@@ -59,10 +61,10 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
      * @param col
      *            The colour to draw the lines
      */
-    public void drawConnectedPoints(final List<? extends Point2d> pts, final Q col) {
-        Point2d p0 = pts.get(0);
+    public void drawConnectedPoints(final List<? extends SpPoint2d> pts, final Q col) {
+        SpPoint2d p0 = pts.get(0);
         for (int i = 1; i < pts.size(); i++) {
-            final Point2d p1 = pts.get(i);
+            final SpPoint2d p1 = pts.get(i);
 
             final int x0 = Math.round(p0.getX());
             final int y0 = Math.round(p0.getY());
@@ -239,7 +241,7 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
      * @param col
      *            The colour in which to draw the line.
      */
-    public void drawLine(final Point2d p1, final Point2d p2, final Q col) {
+    public void drawLine(final SpPoint2d p1, final SpPoint2d p2, final Q col) {
         this.drawLine(Math.round(p1.getX()), Math.round(p1.getY()),
                 Math.round(p2.getX()), Math.round(p2.getY()),
                 1, col);
@@ -258,7 +260,7 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
      * @param col
      *            The colour in which to draw the line.
      */
-    public void drawLine(final Point2d p1, final Point2d p2, final int thickness, final Q col) {
+    public void drawLine(final SpPoint2d p1, final SpPoint2d p2, final int thickness, final Q col) {
         this.drawLine(Math.round(p1.getX()), Math.round(p1.getY()),
                 Math.round(p2.getX()), Math.round(p2.getY()),
                 thickness, col);
@@ -345,7 +347,7 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
 
     /**
      * Draw the given list of points using
-     * {@link #drawPoint(Point2d, Object, int)} with the given colour and size.
+     * {@link #drawPoint(SpPoint2d, Object, int)} with the given colour and size.
      *
      * @param pts
      *            The list of points to draw.
@@ -517,10 +519,10 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
      *            The colour to draw the line
      * @return The points along the bezier curve
      */
-    public Point2d[] drawCubicBezier(final Point2d p1, final Point2d p2,
-                                     final Point2d c1, final Point2d c2, final int thickness, final Q col)
+    public SpPoint2d[] drawCubicBezier(final SpPoint2d p1, final SpPoint2d p2,
+                                     final SpPoint2d c1, final SpPoint2d c2, final int thickness, final Q col)
     {
-        final List<Point2d> points = new ArrayList<Point2d>();
+        final List<SpPoint2d> points = new ArrayList<SpPoint2d>();
 
         final CubicCurve2D c = new CubicCurve2D.Double(
                 p1.getX(), p1.getY(), c1.getX(), c1.getY(),
@@ -533,24 +535,24 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
                                                final double startT, final double endT)
                     {
                         if (0.0 == startT)
-                            points.add(new Point2dImpl(
+                            points.add(new SpPoint2dImpl(
                                     (float) segment.getX1(), (float) segment.getY1()));
 
-                        points.add(new Point2dImpl(
+                        points.add(new SpPoint2dImpl(
                                 (float) segment.getX2(), (float) segment.getY2()));
                     }
                 }
         );
 
-        Point2d last = null;
-        for (final Point2d p : points) {
+        SpPoint2d last = null;
+        for (final SpPoint2d p : points) {
             if (last != null)
                 this.drawLine((int) last.getX(), (int) last.getY(),
                         (int) p.getX(), (int) p.getY(), thickness, col);
             last = p;
         }
 
-        return points.toArray(new Point2d[1]);
+        return points.toArray(new SpPoint2d[1]);
     }
 
     /**
@@ -563,10 +565,10 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
      * @param colour
      * @return a set of points on the curve
      */
-    public Point2d[] drawQuadBezier(final Point2d p1, final Point2d p2, final Point2d c1,
+    public SpPoint2d[] drawQuadBezier(final SpPoint2d p1, final SpPoint2d p2, final SpPoint2d c1,
                                     final int thickness, final Q colour)
     {
-        final List<Point2d> points = new ArrayList<Point2d>();
+        final List<SpPoint2d> points = new ArrayList<SpPoint2d>();
 
         final QuadCurve2D c = new QuadCurve2D.Double(
                 p1.getX(), p1.getY(), c1.getX(), c1.getY(), p2.getX(), p2.getY());
@@ -577,24 +579,24 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
                     public void processSegment(final QuadCurve2D segment, final double startT, final double endT)
                     {
                         if (0.0 == startT)
-                            points.add(new Point2dImpl(
+                            points.add(new SpPoint2dImpl(
                                     (float) segment.getX1(), (float) segment.getY1()));
 
-                        points.add(new Point2dImpl(
+                        points.add(new SpPoint2dImpl(
                                 (float) segment.getX2(), (float) segment.getY2()));
                     }
                 }
         );
 
-        Point2d last = null;
-        for (final Point2d p : points) {
+        SpPoint2d last = null;
+        for (final SpPoint2d p : points) {
             if (last != null)
                 this.drawLine((int) last.getX(), (int) last.getY(),
                         (int) p.getX(), (int) p.getY(), thickness, colour);
             last = p;
         }
 
-        return points.toArray(new Point2d[1]);
+        return points.toArray(new SpPoint2d[1]);
 
     }
 
@@ -653,7 +655,6 @@ public abstract class SpImageRenderer<Q, I extends SpImage<Q, I>>{
     /**
      * Sanitize the colour given to fit this image's pixel type.
      *
-     * @param size
      *            The colour to sanitize
      * @return The array
      */

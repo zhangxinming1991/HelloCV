@@ -1,6 +1,6 @@
 package cn.zxm.scala.snImageDeal
 
-import java.io.File
+import java.io.{ByteArrayOutputStream, File}
 
 import org.openimaj.feature.local.matcher.consistent.ConsistentLocalFeatureMatcher2d
 import org.openimaj.feature.local.matcher.{FastBasicKeypointMatcher, LocalFeatureMatcher, MatchingUtilities}
@@ -8,6 +8,7 @@ import org.openimaj.image.colour.RGBColour
 import org.openimaj.image.feature.local.engine.DoGSIFTEngine
 import org.openimaj.image.feature.local.keypoints.Keypoint
 import org.openimaj.image.{DisplayUtilities, ImageUtilities, MBFImage}
+import org.openimaj.io.IOUtils
 import org.openimaj.math.geometry.transforms.estimation.RobustAffineTransformEstimator
 import org.openimaj.math.model.fit.RANSAC
 
@@ -66,6 +67,9 @@ object SimpleMatch {
     val engine = new DoGSIFTEngine()
     val querykps = engine.findFeatures(query.flatten())
     val targetkps = engine.findFeatures(target.flatten())
+
+    var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
+    IOUtils.writeBinary(baos, querykps)
 
     val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
     val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)

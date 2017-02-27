@@ -38,11 +38,12 @@ object ImagesSequence {
     val dataset_3 = "dataset_200m"
     val dataset_test = "dataset_test"
 
-    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_test + "/*" //数据集路径
+    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_3 + "/*" //数据集路径
+    val inttImgs_path_local = dataset_3 + "/05/*"
 
     val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
 
-    val path = "/user/root/img_sq/" + dataset_test + "/"
+    val path = "/user/root/img_sq/" + dataset_3 + "/"
     val tmpImageSEQ_path: String = hdfs_htname + path
 
     /*val cmdArgs: Array[String] = Array[String]("-m", "CREATE", "-kns", "FILENAME", "-o", tmpImageSEQ_path, "imgdataset/car1.jpg","imgdataset/car2.jpg",
@@ -52,7 +53,7 @@ object ImagesSequence {
 
     rm_hdfs(hdfs_htname,path)
 
-    sc.binaryFiles(initImgs_500k_path_hdfs,20).map(f => {
+    sc.binaryFiles(inttImgs_path_local,20).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()

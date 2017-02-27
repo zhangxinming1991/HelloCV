@@ -1,12 +1,63 @@
 package cn.zxm.sparkSIFT;
 
+import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.FloatWritable;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Writable;
+import org.apache.sanselan.formats.tiff.TiffImageData;
+
 import java.awt.image.BufferedImage;
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Created by root on 17-2-7.
  */
-public class SparkImage {
+public class SparkImage implements Writable,Serializable{
+
+    public IntWritable row;
+    public IntWritable col;
+    public ArrayWritable sePixels;
+
+    public SparkImage(){
+        this.row = new IntWritable(0);
+        this.col = new IntWritable(0);
+        this.sePixels = new ArrayWritable(FloatWritable.class);
+    }
+
+    public SparkImage(int row,int col,ArrayWritable writeables){
+        this.row = new IntWritable(row);
+        this.col = new IntWritable(col);
+        this.sePixels = writeables;
+    }
+
+
+    @Override
+    public void readFields(DataInput input) throws IOException {
+        row.readFields(input);
+        col.readFields(input);
+        sePixels.readFields(input);
+    }
+
+    @Override
+    public void write(DataOutput output) throws IOException {
+        row.write(output);
+        col.write(output);
+        sePixels.write(output);
+    }
+
+    public float[] GetSeqPixel(){
+        float[] pixels = new float[row.get()*col.get()];
+        Writable[] writeables = sePixels.get();
+        for (int i = 0; i < pixels.length; i++) {
+            FloatWritable val = (FloatWritable) writeables[i];
+            pixels[i] = val.get();
+        }
+
+        return pixels;
+    }
 
     public static BufferedImage ToGray(BufferedImage bimg){
 
@@ -54,6 +105,23 @@ public class SparkImage {
             }
         }
     }
+
+    public static byte[]GetGrayDate(BufferedImage bimg){
+        byte[] gray_data = new byte[bimg.getHeight() * bimg.getWidth()];
+        for (int i = 0; i < bimg.getHeight(); i++) {
+
+            for (int j = 0; j < bimg.getWidth(); j++) {
+                final int color = bimg.getRGB(j,i);
+
+                final short r =   (short) ((color>>16) & 0xff);
+                final short g =  (short) ((color>>8) & 0xff);
+                gray_data[i*bimg.getWidth() + i] =  (byte) (color & 0xff);
+            }
+        }
+
+        return gray_data;
+    }
+
 
     private static int colorToRGB(byte alpha,int red,int green,int blue){
         int newPixel = 0;

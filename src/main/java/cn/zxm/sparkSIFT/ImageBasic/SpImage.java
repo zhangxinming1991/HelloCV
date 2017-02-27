@@ -1,6 +1,7 @@
 package cn.zxm.sparkSIFT.ImageBasic;
 
 import Jama.Matrix;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpPoint2d;
 import org.openimaj.image.analyser.PixelAnalyser;
 import org.openimaj.image.pixel.Pixel;
 import org.openimaj.image.processor.GridProcessor;
@@ -279,7 +280,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      * @param col
      *            The colour to draw the lines
      */
-    public void drawConnectedPoints(List<? extends Point2d> pts, Q col) {
+    public void drawConnectedPoints(List<? extends SpPoint2d> pts, Q col) {
         createRenderer().drawConnectedPoints(pts, col);
     }
 
@@ -306,8 +307,8 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      *            The colour to draw the line
      * @return The points along the bezier curve
      */
-    public Point2d[] drawCubicBezier(Point2d p1, Point2d p2,
-                                     Point2d c1, Point2d c2, int thickness, Q col)
+    public SpPoint2d[] drawCubicBezier(SpPoint2d p1, SpPoint2d p2,
+                                       SpPoint2d c1, SpPoint2d c2, int thickness, Q col)
     {
         return createRenderer().drawCubicBezier(p1, p2, c1, c2, thickness, col);
     }
@@ -350,7 +351,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      * @param pt
      *            the coordinate at which to draw
      */
-    public void drawImage(I image, Point2d pt) {
+    public void drawImage(I image, SpPoint2d pt) {
         createRenderer().drawImage(image, (int) pt.getX(), (int) pt.getY());
     }
 
@@ -504,7 +505,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      * @param col
      *            The colour in which to draw the line.
      */
-    public void drawLine(Point2d p1, Point2d p2, Q col) {
+    public void drawLine(SpPoint2d p1, SpPoint2d p2, Q col) {
         createRenderer().drawLine(p1, p2, col);
     }
 
@@ -527,7 +528,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      * @param col
      *            The colour in which to draw the line.
      */
-    public void drawLine(Point2d p1, Point2d p2, int thickness, Q col) {
+    public void drawLine(SpPoint2d p1, SpPoint2d p2, int thickness, Q col) {
         createRenderer().drawLine(p1, p2, thickness, col);
     }
 
@@ -1798,7 +1799,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      *            the region height
      * @return the extracted sub-pixel region
      */
-    public I extractCentreSubPix(Point2d centre, int width, int height) {
+    public I extractCentreSubPix(SpPoint2d centre, int width, int height) {
         return extractCentreSubPix(centre.getX(), centre.getY(), width, height);
     }
 
@@ -1837,7 +1838,7 @@ public abstract class SpImage<Q, I extends SpImage<Q, I>> implements Cloneable, 
      *            region)
      * @return <code>out</code>
      */
-    public I extractCentreSubPix(Point2d centre, I out) {
+    public I extractCentreSubPix(SpPoint2d centre, I out) {
         return extractCentreSubPix(centre.getX(), centre.getY(), out);
     }
 

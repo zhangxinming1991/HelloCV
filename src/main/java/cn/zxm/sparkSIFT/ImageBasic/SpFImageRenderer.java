@@ -3,6 +3,7 @@ package cn.zxm.sparkSIFT.ImageBasic;
 import org.openimaj.math.geometry.line.Line2d;
 import org.openimaj.math.geometry.point.Point2d;
 import org.openimaj.math.geometry.point.Point2dImpl;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpPoint2d;
 import org.openimaj.math.geometry.shape.Polygon;
 
 /**
