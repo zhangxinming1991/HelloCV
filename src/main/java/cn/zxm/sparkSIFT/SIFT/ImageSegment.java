@@ -1,7 +1,9 @@
 package cn.zxm.sparkSIFT.SIFT;
 
+import cn.zxm.sparkSIFT.ImageBasic.SequenceImage;
 import cn.zxm.sparkSIFT.ImageBasic.SpFImage;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 /**
@@ -20,15 +22,14 @@ public class ImageSegment {
 
     /**
      * 获取图片中的某一指定区域
-     * @param origin
+     * @param
      * @param rowStart
      * @param colStart
      * @param roffset
      * @param coffset
      * @return
      */
-    public static SpFImage GetOnePart(SpFImage origin, int rowStart, int colStart, int roffset, int coffset){
-        float [][]opixel = origin.pixels;
+    public static SpFImage GetOnePart(float [][]opixel, int rowStart, int colStart, int roffset, int coffset){
         float [][]tpixel = new float[roffset+1][coffset+1];
 
         for (int i = 0; i <= roffset; i++) {
@@ -39,6 +40,21 @@ public class ImageSegment {
         }
 
         SpFImage partimg = new SpFImage(tpixel);
+
+        return partimg;
+    }
+
+
+    public static SequenceImage GetOnePart(byte [][]pixel, int rowStart, int colStart, int roffset, int coffset){
+        byte [][]tpixel = new byte[roffset+1][coffset+1];
+
+        for (int i = 0; i <= roffset; i++) {
+            for (int j = 0; j <= coffset; j++) {
+                tpixel[i][j] = pixel[i+rowStart][j+colStart];
+            }
+        }
+
+        SequenceImage partimg = new SequenceImage(roffset,coffset,tpixel);
 
         return partimg;
     }
@@ -69,11 +85,46 @@ public class ImageSegment {
                     colOffset = col;
                 }
 
-                SpFImage img = GetOnePart(origin,rp*row,cp*col,rowOffset-1,colOffset-1);
+                SpFImage img = GetOnePart(origin.pixels,rp*row,cp*col,rowOffset-1,colOffset-1);
                 imgParts.add(img);
             }
         }
 
         return imgParts;
+    }
+
+    public static ArrayList<SequenceImage> DiveImgByModel(byte[][] origin,int imgrow,int imgcol,ModelImg modelImg){
+        int row = modelImg.row;
+        int col = modelImg.col;
+
+        int rowParts = imgrow/row;
+        int colParts = imgcol/col;
+
+        ArrayList<SequenceImage> imgParts = new ArrayList<SequenceImage>(rowParts*colParts);
+
+        for (int rp = 0; rp < rowParts; rp++) {
+            int rowOffset;
+            if (rp == rowParts-1){
+                rowOffset = row + imgrow%row;
+            }
+            else {
+                rowOffset = row;
+            }
+            for (int cp = 0; cp < colParts; cp++) {
+                int colOffset;
+                if (cp == colParts-1){
+                    colOffset = col+imgcol%col;
+                }
+                else {
+                    colOffset = col;
+                }
+
+                SequenceImage img = GetOnePart(origin,rp*row,cp*col,rowOffset-1,colOffset-1);
+                imgParts.add(img);
+            }
+        }
+
+        return imgParts;
+
     }
 }

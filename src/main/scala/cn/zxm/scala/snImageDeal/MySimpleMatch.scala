@@ -17,7 +17,7 @@ object MySimpleMatch {
 
   def main(args: Array[String]) {
     val  query= SpImageUtilities.readF(new FileInputStream(new File("dataset_500k/car2.jpg")))
-    val target  = SpImageUtilities.readF(new FileInputStream(new File("dataset_500k/car1.jpg")))
+    val target  = SpImageUtilities.readF(new FileInputStream(new File("201500.jpg")))
 
     //val querymbf = ImageUtilities.readMBF(new FileInputStream(new File("dataset_500k/car2.jpg")))
     //val tgmbf = ImageUtilities.readMBF(new FileInputStream(new File("dataset_500k/car1.jpg")))
@@ -31,8 +31,8 @@ object MySimpleMatch {
     var querykps: SpLocalFeatureList[SpKeypoint] = null
     var tgkps: SpLocalFeatureList[SpKeypoint] = null
 
-    val mdrow = target.getRows/4;
-    val mdcol = target.getCols/3;
+    val mdrow = target.getRows/6;
+    val mdcol = target.getCols/4;
 
     val modelImg:ImageSegment.ModelImg = new ModelImg(mdrow,mdcol)
 

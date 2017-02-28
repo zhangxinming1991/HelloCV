@@ -15,48 +15,22 @@ import java.io.Serializable;
 /**
  * Created by root on 17-2-7.
  */
-public class SparkImage implements Writable,Serializable{
+public class SparkImage implements Serializable{
 
-    public IntWritable row;
-    public IntWritable col;
-    public ArrayWritable sePixels;
+    public int row;
+    public int col;
+    public byte[] sePixels;
 
     public SparkImage(){
-        this.row = new IntWritable(0);
-        this.col = new IntWritable(0);
-        this.sePixels = new ArrayWritable(FloatWritable.class);
+        this.row = 0;
+        this.col = 0;
+        this.sePixels = null;
     }
 
-    public SparkImage(int row,int col,ArrayWritable writeables){
-        this.row = new IntWritable(row);
-        this.col = new IntWritable(col);
+    public SparkImage(int row,int col,byte[] writeables){
+        this.row = row;
+        this.col = col;
         this.sePixels = writeables;
-    }
-
-
-    @Override
-    public void readFields(DataInput input) throws IOException {
-        row.readFields(input);
-        col.readFields(input);
-        sePixels.readFields(input);
-    }
-
-    @Override
-    public void write(DataOutput output) throws IOException {
-        row.write(output);
-        col.write(output);
-        sePixels.write(output);
-    }
-
-    public float[] GetSeqPixel(){
-        float[] pixels = new float[row.get()*col.get()];
-        Writable[] writeables = sePixels.get();
-        for (int i = 0; i < pixels.length; i++) {
-            FloatWritable val = (FloatWritable) writeables[i];
-            pixels[i] = val.get();
-        }
-
-        return pixels;
     }
 
     public static BufferedImage ToGray(BufferedImage bimg){
@@ -106,8 +80,8 @@ public class SparkImage implements Writable,Serializable{
         }
     }
 
-    public static byte[]GetGrayDate(BufferedImage bimg){
-        byte[] gray_data = new byte[bimg.getHeight() * bimg.getWidth()];
+    public static byte[][]GetGrayDate(BufferedImage bimg){
+        byte[][] gray_data = new byte[bimg.getHeight()][bimg.getWidth()];
         for (int i = 0; i < bimg.getHeight(); i++) {
 
             for (int j = 0; j < bimg.getWidth(); j++) {
@@ -115,7 +89,10 @@ public class SparkImage implements Writable,Serializable{
 
                 final short r =   (short) ((color>>16) & 0xff);
                 final short g =  (short) ((color>>8) & 0xff);
-                gray_data[i*bimg.getWidth() + i] =  (byte) (color & 0xff);
+                final short b =  (byte) (color & 0xff);
+
+                int temp = Double.valueOf(0.3*r + 0.59*g + 0.11*b).intValue();
+                gray_data[i][j] = (byte) temp;
             }
         }
 
@@ -125,6 +102,20 @@ public class SparkImage implements Writable,Serializable{
 
     private static int colorToRGB(byte alpha,int red,int green,int blue){
         int newPixel = 0;
+        newPixel += alpha;
+        newPixel = newPixel << 8;
+        newPixel += red;
+        newPixel = newPixel << 8;
+        newPixel += green;
+        newPixel = newPixel << 8;
+        newPixel += blue;
+
+        return newPixel;
+    }
+
+    public static int colorToRGB(byte red,byte green,byte blue){
+        int newPixel = 0;
+        byte alpha = (byte) 255;
         newPixel += alpha;
         newPixel = newPixel << 8;
         newPixel += red;

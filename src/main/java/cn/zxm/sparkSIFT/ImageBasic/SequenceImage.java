@@ -1,33 +1,44 @@
 package cn.zxm.sparkSIFT.ImageBasic;
 
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.FloatWritable;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Created by root on 17-2-27.
  */
-public class SequenceImage implements Writable {
+public class SequenceImage implements Writable,Serializable{
 
     public IntWritable row;
     public IntWritable col;
-    public ArrayWritable sePixels;
+    public BytesWritable sePixels;
 
     public SequenceImage(){
         this.row = new IntWritable(0);
         this.col = new IntWritable(0);
-        this.sePixels = new ArrayWritable(FloatWritable.class);
+        this.sePixels = new BytesWritable();
     }
 
-    public SequenceImage(int row,int col,ArrayWritable writeables){
+    public SequenceImage(int row,int col,byte[] writeables){
         this.row = new IntWritable(row);
         this.col = new IntWritable(col);
-        this.sePixels = writeables;
+        this.sePixels = new BytesWritable(writeables);
+    }
+
+    public SequenceImage(int row,int col,byte[][] writeables){
+        this.row = new IntWritable(row);
+        this.col = new IntWritable(col);
+
+        byte[] onediem = new byte[this.row.get()*this.col.get()];
+        for (int i = 0; i < this.row.get(); i++) {
+            for (int j = 0; j < this.col.get(); j++) {
+                onediem[i*this.col.get() + j] = writeables[i][j];
+            }
+        }
+        this.sePixels = new BytesWritable(onediem);
     }
 
     @Override
@@ -44,14 +55,9 @@ public class SequenceImage implements Writable {
         sePixels.write(output);
     }
 
-    public float[] GetSeqPixel(){
-        float[] pixels = new float[row.get()*col.get()];
-        Writable[] writeables = sePixels.get();
-        for (int i = 0; i < pixels.length; i++) {
-            FloatWritable val = (FloatWritable) writeables[i];
-            pixels[i] = val.get();
-        }
 
+    public byte[] GetSeqPixel(){
+        byte[] pixels = sePixels.getBytes();
         return pixels;
     }
 

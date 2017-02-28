@@ -1,5 +1,6 @@
 package cn.zxm.scala.sparkImageTools
 
+import java.awt.image.BufferedImage
 import java.io._
 import java.net.URI
 import javax.imageio.ImageIO
@@ -84,24 +85,21 @@ object ImagesSeByPart {
 
       val sbs = new ByteArrayInputStream(bytes)
 
-      //val img_0 = ImageIO.read(sbs)
-      //val gray_data = SparkImage.GetGrayDate(img_0)
+      val img_0 = ImageIO.read(sbs)
+      System.out.println("imgtype:" + img_0.getType)
+      val gray_data = SparkImage.GetGrayDate(img_0)
 
-      val img = SpImageUtilities.readF(sbs)
-
-      val mdrow = img.getRows/4;
-      val mdcol = img.getCols/3;
+      val mdrow = img_0.getHeight()/8
+      val mdcol = img_0.getWidth()/6
 
       val modelImg:ImageSegment.ModelImg = new ModelImg(mdrow,mdcol)
-      val imgParts = ImageSegment.DiveImgByModel(img,modelImg)
+      val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),modelImg)
 
       //val m  //构成一个(key,value),其中key为文件名+part_num,value图片每一部分的内容
-      var i = 0;
-      val keyImgParts = new ArrayBuffer[(String,SpFImage)]()
-      val test = new ArrayBuffer[Int]()
+      val keyImgParts = new ArrayBuffer[(String,Int,Int,Array[Byte])]()
       for (i<- 0 to imgParts.size()-1){
         val img = imgParts.get(i)
-        keyImgParts.append((fname+"_"+i,img))
+        keyImgParts.append((fname+"_"+i,img.row.get(),img.col.get(),img.sePixels.getBytes))
       }
 
       keyImgParts.toArray
@@ -110,27 +108,17 @@ object ImagesSeByPart {
     sc.parallelize(keyImgParts,20).flatMap(x => {
       x
     }).map(y => {
-      val pixel_onediem = new ArrayBuffer[Writable]()
-      val pixels = y._2.pixels
-      pixels.foreach(x => {
-        x.foreach(y => {
-          pixel_onediem += new FloatWritable(y)
-        })
-      })
-
-      val onediem = new ArrayWritable(classOf[FloatWritable],pixel_onediem.toArray)
-      val imgsq = new SequenceImage(y._2.getRows,y._2.getCols,onediem)
-
-      (new Text(y._1),new BytesWritable(serialize(imgsq)))
+      val img = new SequenceImage(y._2,y._3,y._4)
+      (new Text(y._1),new BytesWritable(serialize(img)))
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]]) //函数里面保存每个图片的一个部分
 
-    sc.sequenceFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],20).map(f => {
+    /*sc.sequenceFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],20).map(f => {
 
       val img = new SequenceImage()
       deseriable(img,f._2.getBytes)
-      //(img.row.get(),img.col.get())
       if (f._1.toString.indexOf("200000.jpg") != -1){
-        val spfimg = new SpFImage(img.GetSeqPixel(),img.col.get(),img.row.get())
+        val spfimg = new BufferedImage(img.row.get(),img.col.get(),0)
+        //spfimg.setRGB(0,0,spfimg.getWidth,spfimg.getHeight,,0,spfimg.getWidth)
         spfimg
       }
       else {
@@ -138,8 +126,9 @@ object ImagesSeByPart {
       }
     }).collect().foreach(x => {
       if (x != null)
-        SpDisplayUtilities.display(x)
-    })
+        //SpDisplayUtilities.display(x)
+      System.out.println(x.getHeight() + ":" + x.getWidth)
+    })*/
 
     sc.stop()
   }

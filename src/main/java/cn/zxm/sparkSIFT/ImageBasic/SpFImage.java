@@ -59,6 +59,24 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
     }
 
     /**
+     *
+     * @param array must be the gray value
+     * @param width
+     * @param height
+     */
+    public SpFImage(final byte[] array,final int width,final int height){
+        assert (array.length == width * height);
+
+        this.pixels = new float[height][width];
+        this.height = height;
+        this.width = width;
+
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                this.pixels[y][x] = (float) array[y * width + x]/255f;
+    }
+
+    /**
      * Create an {@link SpFImage} from an array of double values with the given
      * width and height. The length of the array must equal the width multiplied
      * by the height. The values will be downcast to floats.
