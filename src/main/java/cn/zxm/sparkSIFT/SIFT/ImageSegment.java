@@ -54,7 +54,7 @@ public class ImageSegment {
             }
         }
 
-        SequenceImage partimg = new SequenceImage(roffset,coffset,tpixel);
+        SequenceImage partimg = new SequenceImage(roffset+1,coffset+1,tpixel);
 
         return partimg;
     }
@@ -105,21 +105,21 @@ public class ImageSegment {
         for (int rp = 0; rp < rowParts; rp++) {
             int rowOffset;
             if (rp == rowParts-1){
-                rowOffset = row + imgrow%row;
+                rowOffset = row + imgrow%row - 1;
             }
             else {
-                rowOffset = row;
+                rowOffset = row - 1;
             }
             for (int cp = 0; cp < colParts; cp++) {
                 int colOffset;
                 if (cp == colParts-1){
-                    colOffset = col+imgcol%col;
+                    colOffset = col+imgcol%col - 1;
                 }
                 else {
-                    colOffset = col;
+                    colOffset = col - 1;
                 }
 
-                SequenceImage img = GetOnePart(origin,rp*row,cp*col,rowOffset-1,colOffset-1);
+                SequenceImage img = GetOnePart(origin,rp*row,cp*col,rowOffset,colOffset);
                 imgParts.add(img);
             }
         }

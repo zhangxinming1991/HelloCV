@@ -49,7 +49,7 @@ public class SparkImage implements Serializable{
 
                 double gray =   0.3*r + 0.59*g + 0.11*b;
                 int gray_i = (int) Math.round(Double.valueOf(gray));
-                gMat.data[i*(bimg.getWidth())+j] = colorToRGB((byte) 255,gray_i,gray_i,gray_i);
+                gMat.data[i*(bimg.getWidth())+j] = colorToRGB((byte) gray_i,(byte)gray_i,(byte)gray_i);
             }
         }
 
@@ -89,10 +89,13 @@ public class SparkImage implements Serializable{
 
                 final short r =   (short) ((color>>16) & 0xff);
                 final short g =  (short) ((color>>8) & 0xff);
-                final short b =  (byte) (color & 0xff);
+                final short b =  (short) (color & 0xff);
 
-                int temp = Double.valueOf(0.3*r + 0.59*g + 0.11*b).intValue();
-                gray_data[i][j] = (byte) temp;
+                //double gray =   0.3*r + 0.59*g + 0.11*b;
+                final float gray = 0.299f * r + 0.587f * g + 0.114f * b;
+                int gray_i = (int) Math.round(Double.valueOf(gray));
+
+                gray_data[i][j] = (byte) gray_i;
             }
         }
 

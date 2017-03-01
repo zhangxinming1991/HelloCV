@@ -23,6 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by root on 17-2-27.
+  * ImagesSeByPart 图片文件分割子图再序列化
   */
 object ImagesSeByPart {
 
@@ -49,6 +50,46 @@ object ImagesSeByPart {
     fs.delete(pt, true)
   }
 
+  def create_Model(height:Int,width:Int): ImageSegment.ModelImg ={
+
+    var model_Height = 0
+    var model_Width = 0
+    if (height >= 3000){
+      model_Height = height/8
+    }
+    else if(height >=2000 && height < 3000){
+      model_Height = height/6
+    }
+    else if (height >= 1000 && height < 2000 ){
+      model_Height = height/4
+    }
+    else if(height >= 500 && height < 1000){
+      model_Height = height/3
+    }
+    else{
+      model_Height = height
+    }
+
+    if (width >= 3000){
+      model_Width = width/6
+    }
+    else if(width >=2000 && width < 3000){
+      model_Width = width/4
+    }
+    else if (width >= 1000 && width < 2000 ){
+      model_Width = width/3
+    }
+    else if(width >= 500 && width < 1000){
+      model_Width = width/2
+    }
+    else{
+      model_Width = width
+    }
+
+    val modelImg:ImageSegment.ModelImg = new ModelImg(model_Height,model_Width) //创建模板
+    modelImg
+  }
+
   def main(args: Array[String]) {
     val conf = new SparkConf()
     conf.setAppName("ImagesSeByPart")
@@ -68,66 +109,55 @@ object ImagesSeByPart {
     val dataset_3 = "dataset_200m"
     val dataset_test = "dataset_test"
 
-    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_3 + "/*" //数据集路径
-    val inttImgs_path_local = dataset_3 + "/05/*"
+    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_test + "/*" //数据集路径
+    val inttImgs_path_local = dataset_3 + "/05/*"  //本地数据集
 
     val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
 
-    val path = "/user/root/img_sq/" + dataset_3 + "/"
-    val tmpImageSEQ_path: String = hdfs_htname + path
+    val path = "/user/root/img_sq/" + dataset_test + "/"
+    val tmpImageSEQ_path: String = hdfs_htname + path//序列化数据集在hdfs保存路径
 
-    rm_hdfs(hdfs_htname,path)
+    rm_hdfs(hdfs_htname,path)//删除原先保存的序列化文件
 
-    val keyImgParts = sc.binaryFiles(inttImgs_path_local,100).map(f => {
+    //获取图片的子图集合
+    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,100).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
-
       val sbs = new ByteArrayInputStream(bytes)
 
       val img_0 = ImageIO.read(sbs)
-      System.out.println("imgtype:" + img_0.getType)
-      val gray_data = SparkImage.GetGrayDate(img_0)
+      val gray_data = SparkImage.GetGrayDate(img_0)//获取图片的BufferImage
 
-      val mdrow = img_0.getHeight()/8
-      val mdcol = img_0.getWidth()/6
+      val modelImg:ImageSegment.ModelImg = create_Model(img_0.getHeight,img_0.getWidth) //创建模板
+      val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),modelImg) //获取图片的分割子图集合
 
-      val modelImg:ImageSegment.ModelImg = new ModelImg(mdrow,mdcol)
-      val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),modelImg)
-
-      //val m  //构成一个(key,value),其中key为文件名+part_num,value图片每一部分的内容
       val keyImgParts = new ArrayBuffer[(String,Int,Int,Array[Byte])]()
       for (i<- 0 to imgParts.size()-1){
         val img = imgParts.get(i)
-        keyImgParts.append((fname+"_"+i,img.row.get(),img.col.get(),img.sePixels.getBytes))
+        keyImgParts.append((fname+"#"+i,img.row.get(),img.col.get(),img.sePixels.getBytes))
       }
 
-      keyImgParts.toArray
-    }).collect()
+      keyImgParts.toArray  //返回图片分割后的子图集合{keyname,row,col,pixel} keyname的格式为：文件名_子图序号 pixel为子图灰度像素值
+    })
 
-    sc.parallelize(keyImgParts,20).flatMap(x => {
+    //将所有图片的子图集合序列化保存到hdfs
+    keyImgPartsRdd.flatMap(x => {
       x
     }).map(y => {
       val img = new SequenceImage(y._2,y._3,y._4)
       (new Text(y._1),new BytesWritable(serialize(img)))
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]]) //函数里面保存每个图片的一个部分
 
-    /*sc.sequenceFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],20).map(f => {
+    /*sc.sequenceFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],1).map(f => {
 
       val img = new SequenceImage()
       deseriable(img,f._2.getBytes)
-      if (f._1.toString.indexOf("200000.jpg") != -1){
-        val spfimg = new BufferedImage(img.row.get(),img.col.get(),0)
-        //spfimg.setRGB(0,0,spfimg.getWidth,spfimg.getHeight,,0,spfimg.getWidth)
+
+        val spfimg = new SpFImage(img.sePixels.getBytes,img.col.get(),img.row.get())
         spfimg
-      }
-      else {
-        null
-      }
-    }).collect().foreach(x => {
-      if (x != null)
-        //SpDisplayUtilities.display(x)
-      System.out.println(x.getHeight() + ":" + x.getWidth)
+      }).collect().foreach(x => {
+        SpDisplayUtilities.display(x)
     })*/
 
     sc.stop()

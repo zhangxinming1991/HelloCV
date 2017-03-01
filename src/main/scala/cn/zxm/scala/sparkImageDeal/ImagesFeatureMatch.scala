@@ -40,21 +40,21 @@ object ImagesFeatureMatch {
 
     val kpslibdir = "/user/root/featureSq/"
 
-    val kpslib_path = hdfs_htname + kpslibdir + dataset_2 + "/" //特征库目录
+    val kpslib_path = hdfs_htname + kpslibdir + dataset_test + "/" //特征库目录
 
     //val testout = "hdfs://simon-Vostro-3905:9000/user/root/testout/" //特征库目录
 
     /*设定的图片的特征点集合 ??? 可以使用 map方式或者更加高效的获取方式获取查询的图片的特征点集合*/
  //   val query_fname = dataset + "/car2.jpg";
  //   val kps_car2 = HadoopSerializationUtil.getKPLFromSequence(new Text(query_fname),kpslib_path)
-    val query_path: String = "car2.jpg"
+    val query_path: String = "/home/simon/Public/spark-SIFT/query/205600.jpg"
     val query = SpImageUtilities.readF(new FileInputStream(new File(query_path)))
     val engine = new SpDoGSIFTEngine()
     val queryKeypoints = engine.findFeatures(query)
     /*设定的图片的特征点集合*/
 
     /*特征点集合间的匹配*/
-    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],10).map(f => {
+    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],500).map(f => {
       val modelFItter = new SpRobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
       val matcher= new SpConsistentLocalFeatureMatcher2d(new SpFastBasicKeypointMatcher[SpKeypoint](8), modelFItter)
 
@@ -65,15 +65,19 @@ object ImagesFeatureMatch {
 
       matcher.findMatches(keypoints)
 
-      if (matcher.getMatches.size() > 150 && matcher.getMatches.size() <= 222)
+      if (matcher.getMatches.size() > 600 && matcher.getMatches.size() < 1614)
         (f._1.toString,matcher.getMatches.size())
       else
         null
     })
 
     val kps = match_result.collect().iterator.foreach(x => {
-      if (x != null)
-        System.out.println(x)})
+      if (x != null){
+        System.out.println(x)
+      }
+    })
+    System.out.println(queryKeypoints.size())
+
     /*特征点集合间的匹配*/
 
     sc.stop()

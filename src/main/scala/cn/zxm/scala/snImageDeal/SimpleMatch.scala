@@ -20,8 +20,8 @@ object SimpleMatch {
 
   def main(args: Array[String]) {
 
-    val query: MBFImage = ImageUtilities.readMBF(new File("dataset_500k/car2.jpg"))
-    val target: MBFImage = ImageUtilities.readMBF(new File("dataset_500k/car1.jpg"))
+    val query: MBFImage = ImageUtilities.readMBF(new File("/home/simon/Public/spark-SIFT/query/205600.jpg"))
+    val target: MBFImage = ImageUtilities.readMBF(new File("dataset_200m/01/205600.jpg"))
 
     /*val query = ImageUtilities.readF(new File("dataset_500k/car2.jpg"))
     val target = ImageUtilities.readF(new File("dataset_500k/car21jpg"))*/
@@ -77,6 +77,7 @@ object SimpleMatch {
     matcher.setModelFeatures(querykps)
     matcher.findMatches(targetkps)
 
+    System.out.println(matcher.getMatches.size())
     val basicMatches = MatchingUtilities.drawMatches(query,target,matcher.getMatches,RGBColour.RED)
     DisplayUtilities.display(basicMatches)
 }

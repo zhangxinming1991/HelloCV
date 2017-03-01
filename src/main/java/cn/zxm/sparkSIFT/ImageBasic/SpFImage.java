@@ -1,6 +1,7 @@
 package cn.zxm.sparkSIFT.ImageBasic;
 
 import Jama.Matrix;
+import cn.zxm.sparkSIFT.SparkImage;
 import org.apache.hadoop.io.Writable;
 import org.apache.log4j.Logger;
 //import org.openimaj.image.ImageUtilities;
@@ -73,7 +74,27 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
 
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
-                this.pixels[y][x] = (float) array[y * width + x]/255f;
+            {
+                byte gray_data = array[y * width + x];
+                //int color = SparkImage.colorToRGB(gray_data,gray_data,gray_data);
+                this.pixels[y][x] = (float) gray_data / 255f;
+                if ( this.pixels[y][x] < 0f){
+                    this.pixels[y][x] = 1 + this.pixels[y][x];
+                }
+                //System.out.println(gray_data + ":" + this.pixels[y][x]);
+            }
+    }
+
+    public SpFImage(final byte[][] array,final int width,final int height){
+        assert (array.length == width * height);
+
+        this.pixels = new float[height][width];
+        this.height = height;
+        this.width = width;
+
+        for (int y = 0; y < height; y++)
+            for (int x = 0; x < width; x++)
+                this.pixels[y][x] = (float) array[y][x]/255f;
     }
 
     /**
@@ -1012,6 +1033,7 @@ public class SpFImage extends SpSingleBandImage<Float,SpFImage> {
                 final float fpix = 0.299f * red + 0.587f * green + 0.114f * blue;
 
                 this.pixels[y][x] = SpImageUtilities.BYTE_TO_FLOAT_LUT[(int) fpix];
+                //System.out.println(this.pixels[y][x]);
             }
         }
         return this;
