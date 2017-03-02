@@ -1,5 +1,6 @@
 package cn.zxm.sparkSIFT.imageKeyPoint;
 
+import org.apache.hadoop.io.Writable;
 import org.openimaj.data.RandomData;
 import org.openimaj.feature.local.LocationFilter;
 import org.openimaj.io.IOUtils;
@@ -67,6 +68,7 @@ public class SpMemoryLocalFeatureList <T extends SpLocalFeature<?, ?>> extends A
         super(initialCapacity);
         this.cached_veclen = veclen;
     }
+
 
     /**
      * Create a MemoryLocalFeatureList by reading all the local features from

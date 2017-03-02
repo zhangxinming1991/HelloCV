@@ -72,6 +72,12 @@
             <version>4.8.2</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>commons-discovery</groupId>
+            <artifactId>commons-discovery</artifactId>
+            <version>0.5</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <repositories>

@@ -1,13 +1,15 @@
 package cn.zxm.scala.snImageDeal
 
-import java.io.{File, FileInputStream}
+import java.io._
 import javax.imageio.ImageIO
 import cn.zxm.sparkSIFT.ImageBasic.{SpFImage, SpImage, SpImageUtilities}
 import cn.zxm.sparkSIFT.ImageMatch._
 import cn.zxm.sparkSIFT.SIFT.ImageSegment.ModelImg
 import cn.zxm.sparkSIFT.SIFT.{ImageSegment, SpDoGSIFTEngine}
 import cn.zxm.sparkSIFT.SparkImage
-import cn.zxm.sparkSIFT.imageKeyPoint.{SpMemoryLocalFeatureList, SpLocalFeatureList, SpKeypoint}
+import cn.zxm.sparkSIFT.imageKeyPoint._
+import org.apache.axis.utils.ByteArrayOutputStream
+import org.apache.hadoop.io.{Writable, ArrayWritable}
 import org.openimaj.image.colour.RGBColour
 import org.openimaj.image.{MBFImage, DisplayUtilities, ImageUtilities}
 import org.openimaj.math.model.fit.RANSAC
@@ -18,6 +20,60 @@ import scala.collection.mutable.ArrayBuffer
   * Created by root on 17-2-23.
   */
 object MySimpleMatch {
+
+  def getBytes(filePath:String): Array[Byte] ={
+    val file = new File(filePath)
+    val fis = new FileInputStream(file)
+    val bos = new ByteArrayOutputStream()
+    val b = new Array[Byte](10*1024*1024)
+
+    var n = 0;
+    //breakable
+    while (n != -1){
+      n = fis.read(b)
+      if (n == -1)
+
+      bos.write(b,0,n)
+    }
+
+    fis.close()
+    bos.close()
+
+    bos.toByteArray
+  }
+
+  def getFile(bfile:Array[Byte],filePath:String,fileName:String): Unit ={
+
+    val dir = new File(filePath)
+    if (!dir.exists() && dir.isDirectory){
+      dir.mkdir()
+    }
+
+    val file = new File(filePath + "/" + fileName)
+    val fos = new FileOutputStream(file)
+    val bos = new BufferedOutputStream(fos)
+    bos.write(bfile)
+
+    bos.close()
+    fos.close()
+  }
+
+  @throws(classOf[IOException])
+  def serialize(writable: Writable): Array[Byte] = {
+    val out: ByteArrayOutputStream = new ByteArrayOutputStream
+    val dataout: DataOutputStream = new DataOutputStream(out)
+    writable.write(dataout)
+    dataout.close
+    return out.toByteArray
+  }
+
+  @throws(classOf[IOException])
+  def deseriable(write: Writable, bytes: Array[Byte]) {
+    val in: ByteArrayInputStream = new ByteArrayInputStream(bytes)
+    val datain: DataInputStream = new DataInputStream(in)
+    write.readFields(datain)
+    datain.close
+  }
 
   def create_Model(height:Int,width:Int): ImageSegment.ModelImg ={
 
@@ -56,6 +112,7 @@ object MySimpleMatch {
     }
 
     val modelImg:ImageSegment.ModelImg = new ModelImg(model_Height,model_Width) //创建模板
+    //val modelImg:ImageSegment.ModelImg = new ModelImg(1000,1000) //创建模板
     modelImg
   }
 
@@ -72,104 +129,80 @@ object MySimpleMatch {
     var querykps: SpLocalFeatureList[SpKeypoint] = null
     var tgkps: SpLocalFeatureList[SpKeypoint] = null
 
-
     val modelImg:ImageSegment.ModelImg = create_Model(target.getRows,target.getCols)
 
     val imgParts = ImageSegment.DiveImgByModel(target,modelImg)
 
     querykps = engine.findFeatures(query)
     matcher.setModelFeatures(querykps)
-    val tgkpslist = new SpMemoryLocalFeatureList[SpKeypoint]()
-    for (i<- 0 to imgParts.size()-1){
-      SpDisplayUtilities.display( imgParts.get(i))
-      tgkps = engine.findFeatures(imgParts.get(i))
 
+    val kpsArray = new ArrayWritable(classOf[SequenceKeypointList])//store the kpslist of all the pic
+    val sqkpslist = new ArrayBuffer[Writable]()  //store the writable kps of a pic
+
+    for (i<- 0 to imgParts.size()-1){
+
+      SpDisplayUtilities.display( imgParts.get(i))
+      tgkps = engine.findFeatures(imgParts.get(i))  //get the kps of pic
       matcher.findMatches(tgkps)
+      match_size = match_size + matcher.getMatches.size()
       System.out.println(i + ":" + matcher.getMatches.size())
-      tgkpslist.addAll(i,tgkps)
+      val wkps = new ArrayBuffer[Writable]() //store the writable kps
+      val it = tgkps.iterator()
+      while(it.hasNext){// change kp in the kps to hadoop writable
+        val kp = it.next()
+
+        val ivec = kp.getFeatureVector.getVector
+        val x = kp.getX
+        val y = kp.getY
+        val ori = kp.ori
+        val scale = kp.getScale
+
+        val sqkp = new SequenceKeyPoint(x,y,ori,scale,ivec); //hadoop writable kp
+        wkps.append(sqkp)
+      }
+
+      val skps = new SequenceKeypointList(classOf[SequenceKeyPoint],wkps.toArray) // hadoop writable kps
+      sqkpslist += skps
     }
 
-    System.out.println("list size:" + tgkpslist.size())
+    System.out.println("total match1:" + match_size)
 
-    matcher.findMatches(tgkpslist)
+    kpsArray.set(sqkpslist.toArray)//make the writable kps of all pic
 
-    match_size = match_size + matcher.getMatches.size()
-    System.out.println(matcher.getMatches.size())
+    val wBytes = serialize(kpsArray)//序列化图片特征点集
+    getFile(wBytes,"/home/simon/Public/spark-SIFT/","kps_serialize")
 
-    /*val partImgs = Array.ofDim[SpFImage](2,2)
-    for (i<- 0 to 1){
-      for (j<- 0 to 1){
-        partImgs(i)(j) = ImageSegment.GetOnePart(target,i*150,j*240,149,239)
-        SpDisplayUtilities.display( partImgs(i)(j))
+    val deswritables = new ArrayBuffer[Writable]()
+    for (i<- 0 to imgParts.size()-1){
+      deswritables += new SequenceKeypointList()
+    }
 
-        tgkps = engine.findFeatures(partImgs(i)(j))
-        querykps = engine.findFeatures(query)
+    val wkpsPics = new ArrayWritable(classOf[SequenceKeypointList])
 
-        matcher.setModelFeatures(tgkps)
-        matcher.findMatches(querykps)
+    val bis = new BufferedInputStream(new FileInputStream("kps_serialize"))
+    val desBytes = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
 
-        match_size = match_size + matcher.getMatches.size()
-        System.out.println( "(" + i + "," + j +  ")" + ":" + matcher.getMatches.size())
-      }
-    }*/
+    //val desBytes = getBytes("kps_serialize")
 
-    System.out.println("total match:" + match_size)
+    deseriable(wkpsPics,desBytes)//反序列化
 
-    querykps = engine.findFeatures(query)
+    val kpsPics = wkpsPics.get()
+
+    match_size = 0
+    for (i <- 0 to kpsPics.size-1){
+      val kpspic = SequenceKeypointList.changeWriteToSq(kpsPics(i))
+      matcher.findMatches(SequenceKeypointList.GetListKps(kpspic.kps.get()))
+      match_size = match_size + matcher.getMatches.size()
+      System.out.println(i + ":" + matcher.getMatches.size())
+    }
+
+    System.out.println("total match2:" + match_size)
+
     tgkps = engine.findFeatures(target)
-
-    matcher.setModelFeatures(querykps)
     matcher.findMatches(tgkps)
-    System.out.println("total match:" + matcher.getMatches.size())
+    System.out.println("total match3:" + matcher.getMatches.size())
     //val basicMatches = SpMatchingUtilities.drawMatches(querymbf,tgmbf,matcher.getMatches,RGBColour.RED)
     //DisplayUtilities.display(basicMatches)
-
-
-  /*  val img_0 = ImageIO.read(new FileInputStream(new File("dataset_500k/car1.jpg")))
-    val gray_datas = SparkImage.GetGrayDate(img_0)
-
-    System.out.println(img_0.getHeight + ":" + img_0.getWidth)
-
-
-
-    val modelImg:ImageSegment.ModelImg = create_Model(img_0.getHeight,img_0.getWidth) //创建模板
-    System.out.println(modelImg.row + ":" + modelImg.col)
-    val imgParts = ImageSegment.DiveImgByModel(gray_datas,img_0.getHeight(),img_0.getWidth(),modelImg) //获取图片的分割子图集合
-    System.out.println(imgParts.get(0).row.get() + ":" + imgParts.get(0).col.get())
-
-    //System.out.println(gray_data. + ":" + gray_data.getWidth)
-    val row = gray_datas.length
-    val col = gray_datas(0).length
-    val rgb = new ArrayBuffer[Int]()
-    val test = imgParts.get(0).sePixels.getBytes
-    for (i <- 0 to row-1)
-      for (j <- 0 to col-1) {
-        //if (test(i*(col) + j) != gray_datas(i)(j)){
-          //System.out.println(test(i*(col) + j))
-        //}
-        val gray_data = test(i*(col) + j)
-        rgb += SparkImage.colorToRGB(gray_data, gray_data, gray_data)
-      }
-
-
-    val img = new SpFImage(imgParts.get(0).sePixels.getBytes,img_0.getWidth,img_0.getHeight)
-
-    SpDisplayUtilities.display(img)
-
-    val gray_datas_1 = SparkImage.ToGray(img_0)
-    val rgb_1 = new ArrayBuffer[Int]()
-    for (i <- 0 to row-1)
-      for (j <- 0 to col-1)
-        rgb_1 += gray_datas_1.getRGB(j,i)
-
-    val img_1 = new SpFImage(rgb_1.toArray,img_0.getWidth,img_0.getHeight)
-
-
-    for (i <- 0 to row-1)
-      for (j <- 0 to col-1) {
-        System.out.println(img.pixels(i)(j) + ":" + img_1.pixels(i)(j))
-      }
-    SpDisplayUtilities.display(img_1)*/
   }
 
 }
