@@ -8,6 +8,7 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.List;
 /**
  * Created by root on 17-3-1.
  */
-public class SequenceKeypointList implements Writable {
+public class SequenceKeypointList implements Writable,Serializable{
 
     public ArrayWritable kps;
 
@@ -40,6 +41,7 @@ public class SequenceKeypointList implements Writable {
         SequenceKeypointList qe = (SequenceKeypointList) writable;
         return qe;
     }
+
     public SequenceKeypointList(){
         kps = new ArrayWritable(SequenceKeyPoint.class);
     }

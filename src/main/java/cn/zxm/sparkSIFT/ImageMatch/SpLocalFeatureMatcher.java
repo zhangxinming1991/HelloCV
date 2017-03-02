@@ -1,6 +1,7 @@
 package cn.zxm.sparkSIFT.ImageMatch;
 
 import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeature;
+import cn.zxm.sparkSIFT.imageKeyPoint.SpPair;
 import org.openimaj.util.pair.Pair;
 
 import java.util.List;

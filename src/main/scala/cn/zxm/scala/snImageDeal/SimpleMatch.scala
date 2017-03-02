@@ -21,7 +21,7 @@ object SimpleMatch {
   def main(args: Array[String]) {
 
     val query: MBFImage = ImageUtilities.readMBF(new File("/home/simon/Public/spark-SIFT/query/205600.jpg"))
-    val target: MBFImage = ImageUtilities.readMBF(new File("dataset_200m/01/205600.jpg"))
+    val target: MBFImage = ImageUtilities.readMBF(new File("dataset_200m/02/207800.jpg"))
 
     /*val query = ImageUtilities.readF(new File("dataset_500k/car2.jpg"))
     val target = ImageUtilities.readF(new File("dataset_500k/car21jpg"))*/
@@ -63,10 +63,17 @@ object SimpleMatch {
     match_result.iterator.foreach(x => System.out.println(x))
 
     sc.stop()*/
+    var start_time = 0.0
+    var end_time = 0.0
+
+    start_time = System.currentTimeMillis()
 
     val engine = new DoGSIFTEngine()
     val querykps = engine.findFeatures(query.flatten())
     val targetkps = engine.findFeatures(target.flatten())
+
+    end_time = System.currentTimeMillis()
+    System.out.println("use [find feature]time:" + (end_time-start_time))
 
     var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
     IOUtils.writeBinary(baos, querykps)
@@ -74,10 +81,24 @@ object SimpleMatch {
     val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
     val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
 
+    start_time = System.currentTimeMillis()
+
     matcher.setModelFeatures(querykps)
     matcher.findMatches(targetkps)
 
+
+
+    end_time = System.currentTimeMillis()
+
+    System.out.println("use [match feature]time:" + (end_time-start_time))
+
     System.out.println(matcher.getMatches.size())
+    val it = matcher.getMatches.iterator()
+    while (it.hasNext){
+      val pair = it.next()
+      System.out.println("(" + pair.getFirstObject.getX + "," + pair.getFirstObject.getY + ")" + "(" + pair.getSecondObject.getX + "," + pair.getSecondObject.getY + ")")
+    }
+
     val basicMatches = MatchingUtilities.drawMatches(query,target,matcher.getMatches,RGBColour.RED)
     DisplayUtilities.display(basicMatches)
 }

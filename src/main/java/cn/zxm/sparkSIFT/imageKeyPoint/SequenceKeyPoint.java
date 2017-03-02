@@ -7,11 +7,12 @@ import org.apache.hadoop.io.Writable;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * Created by root on 17-3-1.
  */
-public class SequenceKeyPoint implements Writable{
+public class SequenceKeyPoint implements Writable,Serializable{
     public FloatWritable x;
     public FloatWritable y;
     public FloatWritable ori;

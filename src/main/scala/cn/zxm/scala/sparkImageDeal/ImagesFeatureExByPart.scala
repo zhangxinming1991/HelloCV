@@ -5,18 +5,39 @@ import java.net.URI
 
 import cn.zxm.sparkSIFT.ImageBasic.{SpFImage, SequenceImage, SpImageUtilities}
 import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import cn.zxm.sparkSIFT.imageKeyPoint._
+import org.apache.axis.utils.ByteArrayOutputStream
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.{Writable, BytesWritable, Text}
+import org.apache.hadoop.io
+import org.apache.hadoop.io.{ArrayWritable, Writable, BytesWritable, Text}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
 import org.apache.spark.storage.StorageLevel
 import org.apache.spark.{SparkContext, SparkConf}
 import org.openimaj.io.IOUtils
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by root on 17-2-28.
   */
 object ImagesFeatureExByPart{
+  @throws(classOf[IOException])
+  def serialize(writable: Writable): Array[Byte] = {
+    val out: ByteArrayOutputStream = new ByteArrayOutputStream
+    val dataout: DataOutputStream = new DataOutputStream(out)
+    writable.write(dataout)
+    dataout.close
+    return out.toByteArray
+  }
+
+  @throws(classOf[IOException])
+  def deseriable(write: Writable, bytes: Array[Byte]) {
+    val in: ByteArrayInputStream = new ByteArrayInputStream(bytes)
+    val datain: DataInputStream = new DataInputStream(in)
+    write.readFields(datain)
+    datain.close
+  }
 
   def main(args: Array[String]) {
     val conf = new SparkConf()
@@ -52,18 +73,47 @@ object ImagesFeatureExByPart{
 
       val engine = new SpDoGSIFTEngine()
       val kps = engine.findFeatures(sfimg)
+      val kpslist = new ArrayBuffer[SpLocalFeatureList[SpKeypoint]]()
+
+      kpslist += kps
 
       val fnkey = fname.toString.split("#")(0)
-      (fnkey,kps) //形成新的(key,value)  key:文件名，没有加子图序号   value:特征点集合
+      (fnkey,kpslist.toList) //形成新的(key,value)  key:文件名，没有加子图序号   value:特征点集合
     }}).reduceByKey((x,y) => {//将一张图片的所有子图的特征点集合合并
-      x.addAll(y)
-      x
+      x++y
     }
     ).map(f => {
-      var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
-      IOUtils.writeBinary(baos, f._2)
 
-      (new Text(f._1),new BytesWritable(baos.toByteArray))
+      val sqkpslist = new ArrayBuffer[Writable]()//保存所有子图的特征点集合
+
+      val it = f._2.iterator
+      while(it.hasNext){// 遍历每一张子图
+      val kps = it.next()
+
+        val wkps = new ArrayBuffer[Writable]() //store the writable kps
+        val it_kp = kps.iterator()
+        while (it_kp.hasNext){//遍历每一张子图中特征点集合
+          val kp = it_kp.next()
+
+          val ivec = kp.getFeatureVector.getVector
+          val x = kp.getX
+          val y = kp.getY
+          val ori = kp.ori
+          val scale = kp.getScale
+
+          val sqkp = new SequenceKeyPoint(x,y,ori,scale,ivec); //hadoop writable kp
+          wkps.append(sqkp)
+        }
+        val skps = new SequenceKeypointList(classOf[SequenceKeyPoint],wkps.toArray) // hadoop writable kps
+        sqkpslist += skps
+      }
+
+      val kpsArray = new ArrayWritable(classOf[SequenceKeypointList])//store the kpslist of all the pic
+      kpsArray.set(sqkpslist.toArray)
+
+
+      val wBytes = serialize(kpsArray)//序列化图片特征点集
+      (new Text(f._1),new BytesWritable(wBytes))
     }).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
     /*提取图片集合的特征点,建立特征库*/
 
@@ -82,14 +132,6 @@ object ImagesFeatureExByPart{
       (fname,new BytesWritable(baos.toByteArray))
     }}).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])*/
     sc.stop()
-  }
-
-  @throws(classOf[IOException])
-  def deseriable(write: Writable, bytes: Array[Byte]) {
-    val in: ByteArrayInputStream = new ByteArrayInputStream(bytes)
-    val datain: DataInputStream = new DataInputStream(in)
-    write.readFields(datain)
-    datain.close
   }
 
   def rm_hdfs(hdfs_htname: String, pt_s: String): Unit ={

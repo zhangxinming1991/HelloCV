@@ -2,6 +2,7 @@ package cn.zxm.sparkSIFT.ImageMatch;
 
 import cn.zxm.sparkSIFT.imageKeyPoint.SpLocalFeature;
 import cn.zxm.sparkSIFT.imageKeyPoint.SpPoint2d;
+import org.openimaj.feature.local.matcher.consistent.ModelFittingLocalFeatureMatcher;
 import org.openimaj.math.model.Model;
 import org.openimaj.math.model.fit.RobustModelFitting;
 import org.openimaj.util.pair.IndependentPair;
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public class SpConsistentLocalFeatureMatcher2d <T extends SpLocalFeature<?, ?> & SpPoint2d>
         implements
-        SpModelFittingLocalFeatureMatcher<T>{
+        SpModelFittingLocalFeatureMatcher<T> {
 
     protected SpLocalFeatureMatcher<T> innerMatcher;
     protected RobustModelFitting<SpPoint2d, SpPoint2d, ?> modelfit;
