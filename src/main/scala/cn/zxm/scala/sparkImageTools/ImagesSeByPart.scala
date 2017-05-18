@@ -98,6 +98,8 @@ object ImagesSeByPart {
     conf.set("spark.driver.maxResultSize","10g")
     val sc = new SparkContext(conf)
 
+    val dataset = args(0)
+
     val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
     val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
 
@@ -108,19 +110,21 @@ object ImagesSeByPart {
     val dataset_2 = "dataset_2g"
     val dataset_3 = "dataset_200m"
     val dataset_test = "dataset_test"
+    //val inttImgs_path_local =  + "/05"  //本地数据集
 
-    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset_test + "/*" //数据集路径
-    val inttImgs_path_local = dataset_3 + "/05/*"  //本地数据集
+
+    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
+
 
     val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
 
-    val path = "/user/root/img_sq/" + dataset_test + "/"
+    val path = "/user/root/img_sq/" + dataset + "/"
     val tmpImageSEQ_path: String = hdfs_htname + path//序列化数据集在hdfs保存路径
 
     rm_hdfs(hdfs_htname,path)//删除原先保存的序列化文件
 
     //获取图片的子图集合
-    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,100).map(f => {
+    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,500).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
@@ -130,6 +134,20 @@ object ImagesSeByPart {
       val gray_data = SparkImage.GetGrayDate(img_0)//获取图片的BufferImage
 
       val modelImg:ImageSegment.ModelImg = create_Model(img_0.getHeight,img_0.getWidth) //创建模板
+
+      /*val model_10_10:ImageSegment.ModelImg = new ModelImg(10,10)
+      val model_50_50:ImageSegment.ModelImg = new ModelImg(50,50)
+      val model_100_100:ImageSegment.ModelImg = new ModelImg(100,100)
+      val model_200_200:ImageSegment.ModelImg = new ModelImg(200,200)
+      val model_300_300:ImageSegment.ModelImg = new ModelImg(300,300)
+      val model_400_400:ImageSegment.ModelImg = new ModelImg(400,400)
+      val model_500_500:ImageSegment.ModelImg = new ModelImg(500,500)
+      val model_600_600:ImageSegment.ModelImg = new ModelImg(600,600)
+      val model_700_700:ImageSegment.ModelImg = new ModelImg(700,700)
+      val model_800_800:ImageSegment.ModelImg = new ModelImg(800,800)
+      val model_900_900:ImageSegment.ModelImg = new ModelImg(900,900)
+      val model_1000_1000:ImageSegment.ModelImg = new ModelImg(1000,1000)*/
+
       val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),modelImg) //获取图片的分割子图集合
 
       val keyImgParts = new ArrayBuffer[(String,Int,Int,Array[Byte])]()
@@ -159,6 +177,8 @@ object ImagesSeByPart {
       }).collect().foreach(x => {
         SpDisplayUtilities.display(x)
     })*/
+
+
 
     sc.stop()
   }

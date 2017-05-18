@@ -102,6 +102,10 @@ public class ImageSegment {
 
         ArrayList<SequenceImage> imgParts = new ArrayList<SequenceImage>(rowParts*colParts);
 
+        if(rowParts == 0){
+
+        }
+
         for (int rp = 0; rp < rowParts; rp++) {
             int rowOffset;
             if (rp == rowParts-1){

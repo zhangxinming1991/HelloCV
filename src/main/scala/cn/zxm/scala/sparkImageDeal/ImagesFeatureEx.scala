@@ -73,17 +73,19 @@ object ImagesFeatureEx {
     val imgsqdir = "/user/root/img_sq/"
     val kpslibdir = "/user/root/featureSq/"
 
-    val dataset_0 = "dataset_500k" //数据集大小
+    val dataset = args(0)
+
+    /*val dataset_0 = "dataset_500k" //数据集大小
     val dataset_1 = "dataset_70m" //数据集大小
     val dataset_2 = "dataset_2g"
     val dataset_3 = "dataset_200m"
-    val dataset_test = "dataset_test"
+    val dataset_test = "dataset_test"*/
 
-    val imageSEQ_path = hdfs_htname + imgsqdir + dataset_test + "/*"
-    val kpslib_path = hdfs_htname + kpslibdir + dataset_test + "/" //特征库目录
+    val imageSEQ_path = hdfs_htname + imgsqdir + dataset + "/*"
+    val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
     /*提取图片集合的特征点,建立特征库*/
-    rm_hdfs(hdfs_htname,kpslibdir + dataset_test)
+    rm_hdfs(hdfs_htname,kpslibdir + dataset)
     val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],500).map({case (fname,fcontext) => {
 
       val datainput:InputStream = new ByteArrayInputStream(fcontext.getBytes)

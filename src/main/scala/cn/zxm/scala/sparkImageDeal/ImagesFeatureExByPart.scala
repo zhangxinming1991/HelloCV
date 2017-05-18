@@ -49,22 +49,24 @@ object ImagesFeatureExByPart{
     conf.set("spark.network.timeout","10000000")
     val sc = new SparkContext(conf)
 
+    val dataset = args(0)
+
     val hdfs_htname = "hdfs://simon-Vostro-3905:9000"
 
     val imgsqdir = "/user/root/img_sq/"
     val kpslibdir = "/user/root/featureSq/"
 
-    val dataset_0 = "dataset_500k" //数据集大小
+   /* val dataset_0 = "dataset_500k" //数据集大小
     val dataset_1 = "dataset_70m" //数据集大小
     val dataset_2 = "dataset_2g"
     val dataset_3 = "dataset_200m"
-    val dataset_test = "dataset_test"
+    val dataset_test = "dataset_test"*/
 
-    val imageSEQ_path = hdfs_htname + imgsqdir + dataset_test + "/*"
-    val kpslib_path = hdfs_htname + kpslibdir + dataset_test + "/" //特征库目录
+    val imageSEQ_path = hdfs_htname + imgsqdir + dataset + "/*"
+    val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
     /*提取图片集合的特征点,建立特征库*/
-    rm_hdfs(hdfs_htname,kpslibdir + dataset_test)
+    rm_hdfs(hdfs_htname,kpslibdir + dataset)
     val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],500).map({case (fname,fcontext) => {
 
       val sqimg = new SequenceImage()
@@ -110,7 +112,6 @@ object ImagesFeatureExByPart{
 
       val kpsArray = new ArrayWritable(classOf[SequenceKeypointList])//store the kpslist of all the pic
       kpsArray.set(sqkpslist.toArray)
-
 
       val wBytes = serialize(kpsArray)//序列化图片特征点集
       (new Text(f._1),new BytesWritable(wBytes))
