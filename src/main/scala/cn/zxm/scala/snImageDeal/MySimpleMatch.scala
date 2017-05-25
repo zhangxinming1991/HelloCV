@@ -117,8 +117,8 @@ object MySimpleMatch {
   }
 
   def main(args: Array[String]) {
-    val   query = SpImageUtilities.readF(new FileInputStream(new File("/home/simon/Public/spark-SIFT/query/205600.jpg")))
-    val  target = SpImageUtilities.readF(new FileInputStream(new File("dataset_200m/01/205600.jpg")))
+    val   query = SpImageUtilities.readF(new FileInputStream(new File("/home/simon/Public/spark-SIFT/query/find_1.png")))
+    val  target = SpImageUtilities.readF(new FileInputStream(new File("dataset_200m/03/211100.jpg")))
 
     val engine = new SpDoGSIFTEngine()
     val modelFItter = new SpRobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))

@@ -22,6 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by root on 17-2-17.
+  * 普通方式下的匹配
   */
 object ImagesFeatureMatch {
   @throws(classOf[IOException])
@@ -57,10 +58,12 @@ object ImagesFeatureMatch {
     val dataset_3 = "dataset_200m"
     val dataset_test = "dataset_test"*/
     val dataset = args(0)
+    val query_path = args(1)
+
     val kpslibdir = "/user/root/featureSq/"
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
-    val query_path: String = "/home/simon/Public/spark-SIFT/query/car2.jpg";
+    //val query_path: String = "/home/simon/Public/spark-SIFT/query/ILSVRC2012_val_00024682.JPEG";
     //val query_path: String = "/home/simon/Public/spark-SIFT/query/205600.jpg"
     val query: MBFImage = ImageUtilities.readMBF(new File(query_path))
     val engine: DoGSIFTEngine = new DoGSIFTEngine
@@ -81,10 +84,12 @@ object ImagesFeatureMatch {
       else
         null
     })
+
     val kps = match_result.collect().iterator.foreach(x => {
       if (x != null)
         System.out.println(x)})
     /*特征点集合间的匹配*/
+    System.out.println("query:" + queryKeypoints.size())
     sc.stop()
   }
 

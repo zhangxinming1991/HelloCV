@@ -15,6 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Created by root on 17-4-4.
+  * 分割方式的匹配
   */
 object ImagesFeatureMatch_PartWay {
   @throws(classOf[IOException])
@@ -45,14 +46,17 @@ object ImagesFeatureMatch_PartWay {
 
     val dataset = args(0)
 
+    val query_path = args(1)
+
     val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
 
     val kpslibdir = "/user/root/featureSq/"
 
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
-    val query_path: String = "/home/simon/Public/spark-SIFT/query/ILSVRC2012_val_00024682.JPEG"
+    //val query_path: String = "/home/simon/Public/spark-SIFT/query/find_1.png"
     //val query_path: String = "/home/simon/Public/spark-SIFT/query/car2.jpg";
+    System.out.println("***query_file:" + query_path)
     val query = SpImageUtilities.readF(new FileInputStream(new File(query_path)))
     val engine = new SpDoGSIFTEngine()
     val queryKeypoints = engine.findFeatures(query)
@@ -85,15 +89,17 @@ object ImagesFeatureMatch_PartWay {
         null
     })
 
+    var counter = 0
+
     val kps = match_result.collect()
     kps.iterator.foreach(
       x =>{
         if(x != null){
           System.out.println(x._1+ "|" + "match size:" + x._2)
+          counter = counter + 1
         }
-
-
       })
+    System.out.println("match_size:" + counter)
     System.out.println(queryKeypoints.size())
 
     /*特征点集合间的匹配*/

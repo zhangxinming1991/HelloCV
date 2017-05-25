@@ -40,8 +40,15 @@ object ImagesFeatureExByPart{
   }
 
   def main(args: Array[String]) {
+
+    val dataset = args(0)
+    val task_size = args(1)
+    val part_size = args(2)
+
+    val start_time = System.currentTimeMillis()
+
     val conf = new SparkConf()
-    conf.setAppName("ImagesFeatureExByPart")
+    conf.setAppName("ImagesFeatureExByPart" + "_" + dataset + "_" + task_size + "_" + "model_" + part_size)
     conf.set("spark.worker.memory","12g")
     conf.set("spark.executor.memory","12g")
     conf.set("spark.driver.memory","16g")
@@ -49,25 +56,17 @@ object ImagesFeatureExByPart{
     conf.set("spark.network.timeout","10000000")
     val sc = new SparkContext(conf)
 
-    val dataset = args(0)
-
     val hdfs_htname = "hdfs://simon-Vostro-3905:9000"
 
     val imgsqdir = "/user/root/img_sq/"
     val kpslibdir = "/user/root/featureSq/"
-
-   /* val dataset_0 = "dataset_500k" //数据集大小
-    val dataset_1 = "dataset_70m" //数据集大小
-    val dataset_2 = "dataset_2g"
-    val dataset_3 = "dataset_200m"
-    val dataset_test = "dataset_test"*/
 
     val imageSEQ_path = hdfs_htname + imgsqdir + dataset + "/*"
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
     /*提取图片集合的特征点,建立特征库*/
     rm_hdfs(hdfs_htname,kpslibdir + dataset)
-    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],500).map({case (fname,fcontext) => {
+    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map({case (fname,fcontext) => {
 
       val sqimg = new SequenceImage()
       deseriable(sqimg,fcontext.getBytes)
@@ -117,21 +116,10 @@ object ImagesFeatureExByPart{
       (new Text(f._1),new BytesWritable(wBytes))
     }).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
     /*提取图片集合的特征点,建立特征库*/
+    val end_time = System.currentTimeMillis()
 
-  /*  val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],1).map({case (fname,fcontext) => {
+    System.out.println("use time:" + (end_time-start_time)/1000)
 
-      val sqimg = new SequenceImage()
-      deseriable(sqimg,fcontext.getBytes)
-      val sfimg = new SpFImage(sqimg.sePixels.getBytes,sqimg.col.get(),sqimg.row.get())
-
-      val engine = new SpDoGSIFTEngine()
-      val kps = engine.findFeatures(sfimg)
-
-      var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
-      IOUtils.writeBinary(baos,kps)
-
-      (fname,new BytesWritable(baos.toByteArray))
-    }}).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])*/
     sc.stop()
   }
 

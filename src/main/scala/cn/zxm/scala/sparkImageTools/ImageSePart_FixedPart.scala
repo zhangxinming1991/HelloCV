@@ -1,32 +1,26 @@
 package cn.zxm.scala.sparkImageTools
 
-import java.awt.image.BufferedImage
-import java.io._
+import java.io.{DataInputStream, ByteArrayInputStream, DataOutputStream, IOException}
 import java.net.URI
 import javax.imageio.ImageIO
 
-import cn.zxm.sparkSIFT.ImageBasic.{SequenceImage, SpFImage, SpImageUtilities}
-import cn.zxm.sparkSIFT.ImageMatch.SpDisplayUtilities
+import cn.zxm.sparkSIFT.ImageBasic.SequenceImage
 import cn.zxm.sparkSIFT.SIFT.ImageSegment
 import cn.zxm.sparkSIFT.SIFT.ImageSegment.ModelImg
 import cn.zxm.sparkSIFT.SparkImage
 import org.apache.axis.utils.ByteArrayOutputStream
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io
-import org.apache.hadoop.io._
+import org.apache.hadoop.io.{BytesWritable, Text, Writable}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
 import org.apache.spark.{SparkContext, SparkConf}
-import org.openimaj.io.IOUtils
 
 import scala.collection.mutable.ArrayBuffer
 
 /**
-  * Created by root on 17-2-27.
-  * ImagesSeByPart 图片文件分割子图再序列化
+  * Created by root on 17-5-22.
   */
-object ImagesSeByPart {
-
+object ImageSePart_FixedPart {
   @throws(classOf[IOException])
   def serialize(writable: Writable): Array[Byte] = {
     val out: ByteArrayOutputStream = new ByteArrayOutputStream
@@ -97,15 +91,19 @@ object ImagesSeByPart {
     val part_size = args(2)
 
     val conf = new SparkConf()
-    conf.setAppName("ImagesSeByPart" + "_" + dataset + "_" + task_size + "_" + part_size)
+    conf.setAppName("ImageSePart_FixedPart" + "_" + dataset + "_" + task_size + "_" + part_size)
     conf.set("spark.worker.memory","8g")
     conf.set("spark.driver.memory","10g")
     conf.set("spark.driver.maxResultSize","10g")
     val sc = new SparkContext(conf)
 
+    val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
+    val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
+
     val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
 
     val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
+
 
     val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
 
@@ -115,7 +113,7 @@ object ImagesSeByPart {
     rm_hdfs(hdfs_htname,path)//删除原先保存的序列化文件
 
     //获取图片的子图集合
-    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).map(f => {
+      val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
@@ -124,8 +122,9 @@ object ImagesSeByPart {
       val img_0 = ImageIO.read(sbs)
       val gray_data = SparkImage.GetGrayDate(img_0)//获取图片的BufferImage
 
-      val modelImg:ImageSegment.ModelImg = create_Model(img_0.getHeight,img_0.getWidth) //创建模板
-      val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),modelImg) //获取图片的分割子图集
+      val model:ImageSegment.ModelImg = new ModelImg(part_size.toInt,part_size.toInt)
+
+      val imgParts = ImageSegment.DiveImgByModel(gray_data,img_0.getHeight(),img_0.getWidth(),model) //获取图片的分割子图集合
 
       val keyImgParts = new ArrayBuffer[(String,Int,Int,Array[Byte])]()
       for (i<- 0 to imgParts.size()-1){
@@ -143,6 +142,19 @@ object ImagesSeByPart {
       val img = new SequenceImage(y._2,y._3,y._4)
       (new Text(y._1),new BytesWritable(serialize(img)))
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]]) //函数里面保存每个图片的一个部分
+
+    /*sc.sequenceFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],1).map(f => {
+
+      val img = new SequenceImage()
+      deseriable(img,f._2.getBytes)
+
+        val spfimg = new SpFImage(img.sePixels.getBytes,img.col.get(),img.row.get())
+        spfimg
+      }).collect().foreach(x => {
+        SpDisplayUtilities.display(x)
+    })*/
+
+
 
     sc.stop()
   }
