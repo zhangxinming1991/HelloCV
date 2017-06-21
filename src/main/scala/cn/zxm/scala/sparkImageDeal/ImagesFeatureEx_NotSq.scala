@@ -43,6 +43,7 @@ object ImagesFeatureEx_NotSq {
     val dataset_test = "dataset_test"*/
 
     val dataset = args(0)
+    val task_size = args(1)
     System.out.println("***hello:" + dataset)
     val kpslibdir = "/user/root/featureSq/"
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
@@ -53,19 +54,32 @@ object ImagesFeatureEx_NotSq {
     /*提取图片集合的特征点,建立特征库*/
     rm_hdfs(hdfs_htname,kpslibdir + dataset)
 
-    sc.binaryFiles(initImgs_path_hdfs,500).map(f => {
+    sc.binaryFiles(initImgs_path_hdfs,task_size.toInt).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
       val bytes = f._2.toArray()
 
-      val datainput:InputStream = new ByteArrayInputStream(bytes)
-      val img = SpImageUtilities.readF(datainput)
-      val engine = new SpDoGSIFTEngine()
-      val kps = engine.findFeatures(img)
+      var datainput:InputStream = new ByteArrayInputStream(bytes)
+      var img = SpImageUtilities.readF(datainput)
+      if(img != null){
+        val engine = new SpDoGSIFTEngine()
+        val kps = engine.findFeatures(img)
 
-      var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
-      IOUtils.writeBinary(baos, kps)
+        val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
+        IOUtils.writeBinary(baos, kps)
 
-      (new Text(fname.toString),new BytesWritable(baos.toByteArray))
+        (new Text(fname.toString),new BytesWritable(baos.toByteArray))
+      }
+      else{
+        datainput = null
+        img = null
+
+        val test = "null"
+        //val pt: Path = new Path(fname.toString)
+        //val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
+        //fs.delete(pt, true)
+        (new Text(fname.toString),new BytesWritable(test.getBytes()))
+      }
+
     }).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
 
     sc.stop()

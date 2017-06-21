@@ -8,6 +8,7 @@ import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
 import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
+import org.apache.hadoop.io
 import org.apache.hadoop.io.{SequenceFile, IntWritable, BytesWritable, Text}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
 import org.apache.spark.{SparkContext, SparkConf}
@@ -81,21 +82,53 @@ object ImagesFeatureEx {
 
     /*提取图片集合的特征点,建立特征库*/
     rm_hdfs(hdfs_htname,kpslibdir + dataset)
+
+    //读取hdfs中图像的序列化文件
     val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map({case (fname,fcontext) => {
+
+      var datainput:InputStream = new ByteArrayInputStream(fcontext.getBytes)
+      var img = SpImageUtilities.readF(datainput)//读取图片的像素矩阵
+      if(img != null){
+        var engine = new SpDoGSIFTEngine()//构建高斯差分金子塔
+        var kps = engine.findFeatures(img)//查找特征点
+
+        val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
+        IOUtils.writeBinary(baos, kps)//将提取到的特征点转化成二进制模式
+
+        img = null
+        datainput = null
+        engine = null
+        kps = null
+
+        (new Text(fname.toString),new BytesWritable(baos.toByteArray))//以序列化的方式保存提取到的图片的特征点集合
+      }
+      else{
+        datainput = null
+        img = null
+
+        val test = "null"
+        //val pt: Path = new Path(fname.toString)
+        //val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
+        //fs.delete(pt, true)
+        (new Text(fname.toString),new BytesWritable(test.getBytes()))
+      }
+    }}).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
+    /*提取图片集合的特征点,建立特征库*/
+
+    /*val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map({case (fname,fcontext) => {
 
       val datainput:InputStream = new ByteArrayInputStream(fcontext.getBytes)
       val img = SpImageUtilities.readF(datainput)
-      val engine = new SpDoGSIFTEngine()
-      val kps = engine.findFeatures(img)
-
-      var baos: ByteArrayOutputStream =new ByteArrayOutputStream()
-      IOUtils.writeBinary(baos, kps)
-
-      (new Text(fname.toString),new BytesWritable(baos.toByteArray))
-      //(new Text(fname.toString),new IntWritable(kps.size()))
-
-    }}).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
-    /*提取图片集合的特征点,建立特征库*/
+      if(img != null){
+        val engine = new SpDoGSIFTEngine()
+        val kps = engine.findFeatures(img)
+        kps.size()
+      }
+      else{
+        val failed = 0
+        failed
+      }
+    }}).collect()*/
 
     sc.stop()
   }

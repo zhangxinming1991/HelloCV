@@ -94,10 +94,10 @@ object ImagesSeByPart {
 
     val dataset = args(0)
     val task_size = args(1)
-    val part_size = args(2)
+    //val part_size = args(2)
 
     val conf = new SparkConf()
-    conf.setAppName("ImagesSeByPart" + "_" + dataset + "_" + task_size + "_" + part_size)
+    conf.setAppName("ImagesSeByPart" + "_" + dataset + "_" + task_size)
     conf.set("spark.worker.memory","8g")
     conf.set("spark.driver.memory","10g")
     conf.set("spark.driver.maxResultSize","10g")

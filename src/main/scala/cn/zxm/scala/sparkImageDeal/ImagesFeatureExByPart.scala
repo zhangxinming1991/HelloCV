@@ -128,6 +128,4 @@ object ImagesFeatureExByPart{
     val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
     fs.delete(pt, true)
   }
-
-
 }

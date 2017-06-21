@@ -33,6 +33,7 @@ object ImagesSequence {
     val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
 
     val dataset = args(0)
+    val task_size = args(1)
 
     /*val dataset_0 = "dataset_500k" //数据集大小
     val dataset_1 = "dataset_70m" //数据集大小
@@ -55,13 +56,14 @@ object ImagesSequence {
 
     rm_hdfs(hdfs_htname,path)
 
-    sc.binaryFiles(initImgs_path_hdfs,500).map(f => {
+    //二进制形式读取图片文件
+    sc.binaryFiles(initImgs_path_hdfs,task_size.toInt).map(f => {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
-      val fcontext = new BytesWritable(bytes)
+      val fcontext = new BytesWritable(bytes)//将图片的内容转化成byte字节形式
 
-      (fname,fcontext) //以key,value返回
+      (fname,fcontext) //以序列化方式保存图片文件到hdfs
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
 
     sc.stop()
