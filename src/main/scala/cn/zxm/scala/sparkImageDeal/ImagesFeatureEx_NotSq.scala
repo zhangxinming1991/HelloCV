@@ -1,10 +1,13 @@
 package cn.zxm.scala.sparkImageDeal
 
-import java.io.{ByteArrayOutputStream, ByteArrayInputStream, InputStream}
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import java.net.URI
 
-import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
-import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
+
+//import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
+//import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import org.apache.spark.imageLib.ImageBasic.SpImageUtilities
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{BytesWritable, Text}
@@ -34,13 +37,13 @@ object ImagesFeatureEx_NotSq {
     val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
     val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+    val hdfs_htname = "hdfs://hadoop0:9000"   //主机名
 
-    /*val dataset_0 = "dataset_500k" //数据集大小
-    val dataset_1 = "dataset_70m" //数据集大小
-    val dataset_2 = "dataset_2g"
-    val dataset_3 = "dataset_200m"
-    val dataset_test = "dataset_test"*/
+//    val dataset_0 = "dataset_500k" //数据集大小
+//    val dataset_1 = "dataset_70m" //数据集大小
+//    val dataset_2 = "dataset_2g"
+//    val dataset_3 = "dataset_200m"
+//    val dataset_test = "dataset_test"
 
     val dataset = args(0)
     val task_size = args(1)
@@ -49,7 +52,7 @@ object ImagesFeatureEx_NotSq {
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
     val initImgs_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
 
-    val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
+    val prefix_path_hdfs = "hdfs://hadoop0:9000/user/root/imgdataset/" //用于提取特征的key
 
     /*提取图片集合的特征点,建立特征库*/
     rm_hdfs(hdfs_htname,kpslibdir + dataset)

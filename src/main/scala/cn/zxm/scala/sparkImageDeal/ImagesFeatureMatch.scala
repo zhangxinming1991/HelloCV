@@ -50,7 +50,7 @@ object ImagesFeatureMatch {
     conf.set("spark.driver.memory","10g")
     conf.set("spark.driver.maxResultSize","10g")
     val sc = new SparkContext(conf)
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000" //主机名
+    val hdfs_htname = "hdfs://hadoop0:9000" //主机名
 
     /*val dataset_0 = "dataset_500k" //数据集大小
     val dataset_1 = "dataset_70m" //数据集大小
@@ -92,5 +92,4 @@ object ImagesFeatureMatch {
     System.out.println("query:" + queryKeypoints.size())
     sc.stop()
   }
-
 }
