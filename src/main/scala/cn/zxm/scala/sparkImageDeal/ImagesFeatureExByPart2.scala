@@ -1,51 +1,30 @@
 package cn.zxm.scala.sparkImageDeal
 
-import java.io._
-import java.net.URI
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import javax.imageio.ImageIO
 
+import cn.zxm.scala.sparkImageDeal.ImagesFeatureExByPart.{rm_hdfs, serialize}
 import cn.zxm.scala.sparkImageTools.ImagesSeByPart.create_Model
 import cn.zxm.sparkSIFT.SIFT.ImageSegment
 import cn.zxm.sparkSIFT.SparkImage
-import org.apache.spark.imageLib.ImageBasic.{SequenceImage, SpFImage, SpImageUtilities}
-import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
-import org.apache.spark.imageLib.imageKeyPoint._
-import org.apache.axis.utils.ByteArrayOutputStream
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{ArrayWritable, BytesWritable, Text, Writable}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
+import org.apache.spark.imageLib.ImageBasic.SpFImage
+import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
+import org.apache.spark.imageLib.imageKeyPoint.{SequenceKeyPoint, SequenceKeypointList, SpKeypoint, SpLocalFeatureList}
 import org.apache.spark.{HashPartitioner, Partitioner, SparkConf, SparkContext}
+import org.openimaj.io.IOUtils
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Try
 
-/**
-  * Created by root on 17-2-28.
-  */
-object ImagesFeatureExByPart{
-  @throws(classOf[IOException])
-  def serialize(writable: Writable): Array[Byte] = {
-    val out: ByteArrayOutputStream = new ByteArrayOutputStream
-    val dataout: DataOutputStream = new DataOutputStream(out)
-    writable.write(dataout)
-    dataout.close
-    return out.toByteArray
-  }
-
-  @throws(classOf[IOException])
-  def deseriable(write: Writable, bytes: Array[Byte]) {
-    val in: ByteArrayInputStream = new ByteArrayInputStream(bytes)
-    val datain: DataInputStream = new DataInputStream(in)
-    write.readFields(datain)
-    datain.close
-  }
+object ImagesFeatureExByPart2 {
 
   class MySparkPartition(numParts: Int) extends Partitioner{
     override def numPartitions: Int = numParts
 
     override def getPartition(key: Any): Int = {
-      val code = key.toString.split("#")(0).hashCode % numPartitions
+      val code = key.toString.hashCode % numPartitions
       if(code < 0)
         code + numPartitions
       else
@@ -86,8 +65,8 @@ object ImagesFeatureExByPart{
 
     //获取图片的子图集合
     val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).persist().map(f =>  Try{{
-//      val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
-      val fname = f._1
+      val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
+
       val bytes = f._2.toArray()
       val sbs = new ByteArrayInputStream(bytes)
 
@@ -109,7 +88,7 @@ object ImagesFeatureExByPart{
       x
     }).map{case (name,row,col,bytes) => {
       (name,(row,col,bytes))//可以进行重新分区优化，按照fname
-    }}.partitionBy(new MySparkPartition(1000)).map({case (pname,(row,col,bytes)) => Try{{
+    }}.partitionBy(new HashPartitioner(10000)).map({case (pname,(row,col,bytes)) => Try{{
 
       val sfimg = new SpFImage(bytes,col,row)
 
@@ -162,11 +141,5 @@ object ImagesFeatureExByPart{
     System.out.println("use time:" + (end_time-start_time)/1000)
 
     sc.stop()
-  }
-
-  def rm_hdfs(hdfs_htname: String, pt_s: String): Unit ={
-    val pt: Path = new Path(hdfs_htname + pt_s)
-    val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
-    fs.delete(pt, true)
   }
 }

@@ -3,17 +3,16 @@ package cn.zxm.scala.sparkImageDeal
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, InputStream}
 import java.net.URI
 
+import org.apache.spark.imageLib.imageKeyPoint.{SpKeypoint, SpMemoryLocalFeatureList}
 import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
 
-//import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
-//import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
+import scala.util.{Failure, Success, Try}
 import org.apache.spark.imageLib.ImageBasic.SpImageUtilities
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.io.{BytesWritable, Text}
 import org.apache.hadoop.mapred.SequenceFileOutputFormat
-import org.apache.spark.storage.StorageLevel
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.{SparkConf, SparkContext}
 import org.openimaj.io.IOUtils
 
 /**
@@ -29,61 +28,78 @@ object ImagesFeatureEx_NotSq {
   def main(args: Array[String]) {
     val conf = new SparkConf()
     conf.setAppName("ImagesFeatureEx_NotSq")
-    conf.set("spark.worker.memory","8g")
-    conf.set("spark.driver.memory","10g")
-    conf.set("spark.driver.maxResultSize","10g")
+    conf.set("spark.worker.memory","12g")
+    conf.set("spark.executor.memory","12g")
+    conf.set("spark.driver.memory","16g")
+    conf.set("spark.driver.maxResultSize","16g")
     val sc = new SparkContext(conf)
 
-    val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
-    val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
-
-    val hdfs_htname = "hdfs://hadoop0:9000"   //主机名
-
-//    val dataset_0 = "dataset_500k" //数据集大小
-//    val dataset_1 = "dataset_70m" //数据集大小
-//    val dataset_2 = "dataset_2g"
-//    val dataset_3 = "dataset_200m"
-//    val dataset_test = "dataset_test"
+    val hdfsHt = "hdfs://hadoop0:9000"   //主机名
 
     val dataset = args(0)
     val task_size = args(1)
-    System.out.println("***hello:" + dataset)
+
     val kpslibdir = "/user/root/featureSq/"
-    val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
-    val initImgs_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
+    val kpslib_path = hdfsHt + kpslibdir + dataset + "/" //特征库目录
+    val initImgs_path_hdfs = hdfsHt + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
 
     val prefix_path_hdfs = "hdfs://hadoop0:9000/user/root/imgdataset/" //用于提取特征的key
 
-    /*提取图片集合的特征点,建立特征库*/
-    rm_hdfs(hdfs_htname,kpslibdir + dataset)
+    var errorReadFileCount = sc.longAccumulator //读错误共享累加器
+    var errorExactCount = sc.longAccumulator //提取错误共享累加器
 
-    sc.binaryFiles(initImgs_path_hdfs,task_size.toInt).map(f => {
-      val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
+    /*提取图片集合的特征点,建立特征库*/
+    rm_hdfs(hdfsHt,kpslibdir + dataset)
+
+    sc.binaryFiles(initImgs_path_hdfs,task_size.toInt).persist().map(f => Try{
+
+//      val fileName = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))
       val bytes = f._2.toArray()
 
-      var datainput:InputStream = new ByteArrayInputStream(bytes)
-      var img = SpImageUtilities.readF(datainput)
-      if(img != null){
-        val engine = new SpDoGSIFTEngine()
-        val kps = engine.findFeatures(img)
+      val dataInput:InputStream = new ByteArrayInputStream(bytes)
+      val img = SpImageUtilities.readF(dataInput)
 
-        val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
-        IOUtils.writeBinary(baos, kps)
+      (f._1,img)
 
-        (new Text(fname.toString),new BytesWritable(baos.toByteArray))
+    }).map(x => Try{
+      x match {
+        case Success(v) =>{//读取图片文件成功
+
+          val data = x.get
+          val engine = new SpDoGSIFTEngine()
+          val kps = engine.findFeatures(data._2)
+
+          val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
+          IOUtils.writeBinary(baos, kps)
+
+          (new Text(data._1),new BytesWritable(baos.toByteArray))
+        }
+        case Failure(e) => {//读取图片文件失败
+
+          errorReadFileCount.add(1)
+          //val data = x.get  //!!!error:x 的值不能使用
+
+          val kps = new SpMemoryLocalFeatureList[SpKeypoint](0)//返回特征点集合长度为0
+
+          val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
+          IOUtils.writeBinary(baos, kps)
+
+          (new Text("error"),new BytesWritable(baos.toByteArray))
+        }
       }
-      else{
-        datainput = null
-        img = null
-
-        val test = "null"
-        //val pt: Path = new Path(fname.toString)
-        //val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
-        //fs.delete(pt, true)
-        (new Text(fname.toString),new BytesWritable(test.getBytes()))
+    }).map(x => Try{
+      x match {
+        case Success(v) => x.get
+        case Failure(e) => {
+          errorExactCount.add(1)
+          x.get
+        }
       }
 
-    }).persist(StorageLevel.MEMORY_AND_DISK).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
+    }).filter(x => x.isSuccess).map(x => x.get).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
+
+    System.out.println("***errorReadFileCount:" + errorReadFileCount.sum)
+    System.out.println("***errorExactCount:" + errorExactCount.sum)
 
     sc.stop()
   }

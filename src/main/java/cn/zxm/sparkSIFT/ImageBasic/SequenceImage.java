@@ -60,6 +60,4 @@ public class SequenceImage implements Writable,Serializable{
         byte[] pixels = sePixels.getBytes();
         return pixels;
     }
-
-
 }

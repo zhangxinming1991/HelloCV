@@ -30,7 +30,7 @@ object ImagesSequence {
     val initImgs_path = "/home/simon/Public/spark-SIFT/imgdataset/"
     val prefix_path = "file:/home/simon/Public/spark-SIFT/imgdataset/"
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+    val hdfsHt = "hdfs://hadoop0:9000"   //主机名
 
     val dataset = args(0)
     val task_size = args(1)
@@ -42,28 +42,23 @@ object ImagesSequence {
     val dataset_4 = "dataset_4g"
     val dataset_test = "dataset_test"*/
 
-    val initImgs_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
+    val initImgs_path_hdfs = hdfsHt + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
 
-    val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
+    val prefix_path_hdfs = "hdfs://hadoop0:9000/user/root/imgdataset/" //用于提取特征的key
 
     val path = "/user/root/img_sq/" + dataset + "/"
-    val tmpImageSEQ_path: String = hdfs_htname + path
+    val tmpImageSEQ_path: String = hdfsHt + path
 
-    /*val cmdArgs: Array[String] = Array[String]("-m", "CREATE", "-kns", "FILENAME", "-o", tmpImageSEQ_path, "imgdataset/car1.jpg","imgdataset/car2.jpg",
-    "imgdataset/car3.jpg","imgdataset/car4.jpg")
-
-    SequenceFileTool.main(cmdArgs)*/
-
-    rm_hdfs(hdfs_htname,path)
+    rm_hdfs(hdfsHt,path)
 
     //二进制形式读取图片文件
     sc.binaryFiles(initImgs_path_hdfs,task_size.toInt).map(f => {
-      val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
+      //val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
       val fcontext = new BytesWritable(bytes)//将图片的内容转化成byte字节形式
 
-      (fname,fcontext) //以序列化方式保存图片文件到hdfs
+      (new Text(f._1),fcontext) //以序列化方式保存图片文件到hdfs
     }).saveAsHadoopFile(tmpImageSEQ_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
 
     sc.stop()

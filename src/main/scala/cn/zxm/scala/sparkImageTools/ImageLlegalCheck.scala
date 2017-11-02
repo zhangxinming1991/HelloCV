@@ -1,14 +1,12 @@
 package cn.zxm.scala.sparkImageTools
 
-import java.io.ByteArrayInputStream
+import java.io.{ByteArrayInputStream}
 import java.net.URI
-import javax.imageio.ImageIO
 
 import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
-import org.apache.hadoop.io.Text
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark._
 
 /**
   * Created by root on 17-5-29.
@@ -21,47 +19,69 @@ object ImageLlegalCheck {
     fs.delete(pt, true)
   }
 
+  class MySparkPartition(numParts: Int) extends Partitioner{
+    override def numPartitions: Int = numParts
+
+    override def getPartition(key: Any): Int = {
+      val code = key.toString.split("#")(0).hashCode % numPartitions
+      if(code < 0)
+        code + numPartitions
+      else
+        code
+    }
+
+  }
+
   def main(args: Array[String]): Unit = {
-    val dataset = args(0)
+    val dataSet = args(0)
     val task_size = args(1)
-    val part_size = args(2)
+
 
     val conf = new SparkConf()
-    conf.setAppName("ImageDesqByPart")
-    conf.set("spark.worker.memory","8g")
-    conf.set("spark.driver.memory","10g")
-    conf.set("spark.driver.maxResultSize","10g")
+    conf.setAppName("ImageLegalCheck")
+    conf.set("spark.worker.memory","12g")
+    conf.set("spark.executor.memory","12g")
+    conf.set("spark.driver.memory","16g")
+    conf.set("spark.driver.maxResultSize","16g")
     val sc = new SparkContext(conf)
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+    val hdfsHost = "hdfs://hadoop0:9000"   //主机名
 
-    val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
+    val imagePath = hdfsHost + "/user/root/imgdataset/" + dataSet + "/*" //数据集路径
 
-    val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
 
-    val failed_list = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).map(f => {
+    val errorLog = "/user/root/illegalPictures/"
+    var errorReadFileCount = sc.longAccumulator
+
+    rm_hdfs(hdfsHost,errorLog)
+
+    val failed_list = sc.binaryFiles(imagePath,task_size.toInt).map(f =>  try {
 
       val bytes = f._2.toArray()
       val sbs = new ByteArrayInputStream(bytes)
 
       val img = SpImageUtilities.readF(sbs)
-      if(img == null){
-        val pt: Path = new Path(f._1)
-        val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
-        fs.delete(pt, true)
-        f._1
-      }
 
-      else
-        null
-    }).collect()
+      null
+////      if(img == null){
+////        val pt: Path = new Path(f._1)
+////        val fs: FileSystem = FileSystem.get(new URI(hdfs_htname), new Configuration, "root")
+////        fs.delete(pt, true)
+////        f._1
+////      }
+//
+//      else
+//        null
+    //  (f._1,"ok")
+    //  null
+    }catch {case e:Exception=>{
+      errorReadFileCount.add(1)
+      (f._1.toString,e.getMessage)
+    }
+    }
+    ).filter(x => {x != null}).saveAsTextFile(hdfsHost+errorLog)
 
-    System.out.println("***bad picture***")
-    failed_list.iterator.foreach(x => {
-      if(x != null)
-        System.out.println(x)
-    })
-    System.out.println("***bad picture***")
+    System.out.println("errorReadFileCount:" + errorReadFileCount.sum)
 
     sc.stop()
   }

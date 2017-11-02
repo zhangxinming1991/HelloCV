@@ -98,16 +98,17 @@ object ImagesSeByPart {
 
     val conf = new SparkConf()
     conf.setAppName("ImagesSeByPart" + "_" + dataset + "_" + task_size)
-    conf.set("spark.worker.memory","8g")
-    conf.set("spark.driver.memory","10g")
-    conf.set("spark.driver.maxResultSize","10g")
+    conf.set("spark.worker.memory","12g")
+    conf.set("spark.executor.memory","12g")
+    conf.set("spark.driver.memory","16g")
+    conf.set("spark.driver.maxResultSize","16g")
     val sc = new SparkContext(conf)
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+    val hdfs_htname = "hdfs://hadoop0:9000"   //主机名
 
     val initImgs_500k_path_hdfs = hdfs_htname + "/user/root/imgdataset/" + dataset + "/*" //数据集路径
 
-    val prefix_path_hdfs = "hdfs://simon-Vostro-3905:9000/user/root/imgdataset/" //用于提取特征的key
+    val prefix_path_hdfs = "hdfs://hadoop0:9000/user/root/imgdataset/" //用于提取特征的key
 
     val path = "/user/root/img_sq/" + dataset + "/"
     val tmpImageSEQ_path: String = hdfs_htname + path//序列化数据集在hdfs保存路径
@@ -115,7 +116,7 @@ object ImagesSeByPart {
     rm_hdfs(hdfs_htname,path)//删除原先保存的序列化文件
 
     //获取图片的子图集合
-    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).map(f => {
+    val keyImgPartsRdd = sc.binaryFiles(initImgs_500k_path_hdfs,task_size.toInt).map(f => try {
       val fname = new Text(f._1.substring(prefix_path_hdfs.length,f._1.length))//获取features key
 
       val bytes = f._2.toArray()
@@ -134,7 +135,9 @@ object ImagesSeByPart {
       }
 
       keyImgParts.toArray  //返回图片分割后的子图集合{keyname,row,col,pixel} keyname的格式为：文件名_子图序号 pixel为子图灰度像素值
-    })
+    }catch {case e:Exception=>{null}
+    }
+    )
 
     //将所有图片的子图集合序列化保存到hdfs
     keyImgPartsRdd.flatMap(x => {

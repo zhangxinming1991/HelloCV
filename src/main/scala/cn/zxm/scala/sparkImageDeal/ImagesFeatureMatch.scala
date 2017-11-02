@@ -46,31 +46,28 @@ object ImagesFeatureMatch {
     //普通的提取方式对应的匹配
     val conf = new SparkConf()
     conf.setAppName("ImagesFeatureMatch")
-    conf.set("spark.worker.memory","8g")
-    conf.set("spark.driver.memory","10g")
-    conf.set("spark.driver.maxResultSize","10g")
+    conf.set("spark.worker.memory","12g")
+    conf.set("spark.executor.memory","12g")
+    conf.set("spark.driver.memory","16g")
+    conf.set("spark.driver.maxResultSize","16g")
+    conf.set("spark.network.timeout","10000000")
     val sc = new SparkContext(conf)
     val hdfs_htname = "hdfs://hadoop0:9000" //主机名
 
-    /*val dataset_0 = "dataset_500k" //数据集大小
-    val dataset_1 = "dataset_70m" //数据集大小
-    val dataset_2 = "dataset_2g"
-    val dataset_3 = "dataset_200m"
-    val dataset_test = "dataset_test"*/
     val dataset = args(0)
     val query_path = args(1)
 
     val kpslibdir = "/user/root/featureSq/"
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
-    //val query_path: String = "/home/simon/Public/spark-SIFT/query/ILSVRC2012_val_00024682.JPEG";
-    //val query_path: String = "/home/simon/Public/spark-SIFT/query/205600.jpg"
     val query: MBFImage = ImageUtilities.readMBF(new File(query_path))
     val engine: DoGSIFTEngine = new DoGSIFTEngine
     val queryKeypoints: LocalFeatureList[Keypoint] = engine.findFeatures(query.flatten)
     /*设定的图片的特征点集合*/
     /*特征点集合间的匹配*/
-    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],500).map(f => {
+    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],100).map(f => try {
+
+
       val modelFItter: RobustAffineTransformEstimator = new RobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
       val matcher: LocalFeatureMatcher[Keypoint] = new ConsistentLocalFeatureMatcher2d[Keypoint](new FastBasicKeypointMatcher[Keypoint](8), modelFItter)
       val bis:InputStream = new ByteArrayInputStream(f._2.getBytes)
@@ -79,16 +76,23 @@ object ImagesFeatureMatch {
       matcher.findMatches(keypoints)
 
       val match_size = matcher.getMatches.size()
-      if (match_size > queryKeypoints.size()- queryKeypoints.size()/2 && match_size < queryKeypoints.size())
+      if (match_size > (queryKeypoints.size()- queryKeypoints.size()/2) && match_size < (queryKeypoints.size()))
         (f._1.toString,matcher.getMatches.size())
       else
         null
+      }catch {case e:Exception=>{(f._1.toString,e.getMessage)}
+      }
+    ).filter(x => {x != null})
+
+    var counter = 0
+
+    match_result.collect().iterator.foreach(x => {
+      System.out.println(x)
+      counter += 1
     })
 
-    val kps = match_result.collect().iterator.foreach(x => {
-      if (x != null)
-        System.out.println(x)})
     /*特征点集合间的匹配*/
+    System.out.println("fit_num:" + counter)
     System.out.println("query:" + queryKeypoints.size())
     sc.stop()
   }

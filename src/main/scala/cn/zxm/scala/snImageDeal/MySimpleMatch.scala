@@ -117,8 +117,8 @@ object MySimpleMatch {
   }
 
   def main(args: Array[String]) {
-    val   query = SpImageUtilities.readF(new FileInputStream(new File("/home/simon/Public/spark-SIFT/query/find_1.png")))
-    val  target = SpImageUtilities.readF(new FileInputStream(new File("dataset_200m/03/211100.jpg")))
+    val   query = SpImageUtilities.readF(new FileInputStream(new File("/home/hadoop0/Pictures/query/214100.jpg")))
+    val  target = SpImageUtilities.readF(new FileInputStream(new File("/home/hadoop0/Pictures/dataset_200m/214100.jpg")))
 
     val engine = new SpDoGSIFTEngine()
     val modelFItter = new SpRobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
@@ -170,7 +170,7 @@ object MySimpleMatch {
     kpsArray.set(sqkpslist.toArray)//make the writable kps of all pic
 
     val wBytes = serialize(kpsArray)//序列化图片特征点集
-    getFile(wBytes,"/home/simon/Public/spark-SIFT/","kps_serialize")
+    getFile(wBytes,"/home/hadoop0/Public","kps_serialize")
 
     val deswritables = new ArrayBuffer[Writable]()
     for (i<- 0 to imgParts.size()-1){
@@ -179,7 +179,7 @@ object MySimpleMatch {
 
     val wkpsPics = new ArrayWritable(classOf[SequenceKeypointList])
 
-    val bis = new BufferedInputStream(new FileInputStream("kps_serialize"))
+    val bis = new BufferedInputStream(new FileInputStream("/home/hadoop0/Public/kps_serialize"))
     val desBytes = Stream.continually(bis.read).takeWhile(-1 !=).map(_.toByte).toArray
 
     //val desBytes = getBytes("kps_serialize")

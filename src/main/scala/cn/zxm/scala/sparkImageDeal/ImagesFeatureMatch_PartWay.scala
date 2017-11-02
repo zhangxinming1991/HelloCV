@@ -2,10 +2,11 @@ package cn.zxm.scala.sparkImageDeal
 
 import java.io._
 
-import cn.zxm.sparkSIFT.ImageBasic.SpImageUtilities
-import cn.zxm.sparkSIFT.ImageMatch.{SpFastBasicKeypointMatcher, SpConsistentLocalFeatureMatcher2d, SpRobustAffineTransformEstimator}
-import cn.zxm.sparkSIFT.SIFT.SpDoGSIFTEngine
-import cn.zxm.sparkSIFT.imageKeyPoint.{SequenceKeypointList, SpKeypoint}
+
+import org.apache.spark.imageLib.ImageBasic.SpImageUtilities
+import org.apache.spark.imageLib.ImageMatch.{SpFastBasicKeypointMatcher, SpConsistentLocalFeatureMatcher2d, SpRobustAffineTransformEstimator}
+import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
+import org.apache.spark.imageLib.imageKeyPoint.{SequenceKeypointList, SpKeypoint}
 import org.apache.axis.utils.ByteArrayOutputStream
 import org.apache.hadoop.io.{ArrayWritable, BytesWritable, Text, Writable}
 import org.apache.spark.{SparkContext, SparkConf}
@@ -48,14 +49,12 @@ object ImagesFeatureMatch_PartWay {
 
     val query_path = args(1)
 
-    val hdfs_htname = "hdfs://simon-Vostro-3905:9000"   //主机名
+    val hdfs_htname = "hdfs://hadoop0:9000"   //主机名
 
     val kpslibdir = "/user/root/featureSq/"
 
     val kpslib_path = hdfs_htname + kpslibdir + dataset + "/" //特征库目录
 
-    //val query_path: String = "/home/simon/Public/spark-SIFT/query/find_1.png"
-    //val query_path: String = "/home/simon/Public/spark-SIFT/query/car2.jpg";
     System.out.println("***query_file:" + query_path)
     val query = SpImageUtilities.readF(new FileInputStream(new File(query_path)))
     val engine = new SpDoGSIFTEngine()
@@ -63,7 +62,7 @@ object ImagesFeatureMatch_PartWay {
     /*设定的图片的特征点集合*/
 
     /*特征点集合间的匹配*/
-    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],500).map(f => {
+    val match_result = sc.sequenceFile(kpslib_path,classOf[Text],classOf[BytesWritable],100).map(f => try {
       val modelFItter = new SpRobustAffineTransformEstimator(5.0, 1500, new RANSAC.PercentageInliersStoppingCondition(0.5))
       val matcher= new SpConsistentLocalFeatureMatcher2d(new SpFastBasicKeypointMatcher[SpKeypoint](8), modelFItter)
 
@@ -74,7 +73,7 @@ object ImagesFeatureMatch_PartWay {
       deseriable(wkpsPics,f._2.getBytes)//反序列化
 
       val kpsPics = wkpsPics.get()
-      //f._2.getClass
+
       val match_pair = new ArrayBuffer[(SpKeypoint,SpKeypoint)]()
       for (i <- 0 to kpsPics.size-1){
         val kpspic = SequenceKeypointList.changeWriteToSq(kpsPics(i))
@@ -82,24 +81,25 @@ object ImagesFeatureMatch_PartWay {
         match_size = match_size + matcher.getMatches.size()
       }
 
-      if (match_size > queryKeypoints.size()- queryKeypoints.size()/2 && match_size < queryKeypoints.size()){
+      if (match_size > (queryKeypoints.size()- queryKeypoints.size()/2) && match_size < (queryKeypoints.size())){
         (f._1.toString,match_size)
       }
-      else
+      else{
         null
-    })
+      }
+
+    }catch {case e:Exception=>{(f._1.toString,e.getMessage)}
+    }).filter(x => {x != null})
 
     var counter = 0
 
     val kps = match_result.collect()
     kps.iterator.foreach(
       x =>{
-        if(x != null){
           System.out.println(x._1+ "|" + "match size:" + x._2)
           counter = counter + 1
-        }
       })
-    System.out.println("match_size:" + counter)
+    System.out.println("fit_num:" + counter)
     System.out.println(queryKeypoints.size())
 
     /*特征点集合间的匹配*/

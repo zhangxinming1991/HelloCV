@@ -20,9 +20,9 @@ object SimpleMatch {
 
   def main(args: Array[String]) {
 
-    val query: MBFImage = ImageUtilities.readMBF(new File("dataset_70m/4k_3.jpg"))
+    val query: MBFImage = ImageUtilities.readMBF(new File("/home/hadoop0/Pictures/query/214100.jpg"))
   //  val target: MBFImage = ImageUtilities.readMBF(new File("dataset_200m/02/207800.jpg"))
-    val target: MBFImage = ImageUtilities.readMBF(new File("query/8046.jpg"))
+    val target: MBFImage = ImageUtilities.readMBF(new File("/home/hadoop0/Pictures/dataset_200m/214100.jpg"))
 
     /*val query = ImageUtilities.readF(new File("dataset_500k/car2.jpg"))
     val target = ImageUtilities.readF(new File("dataset_500k/car21jpg"))*/

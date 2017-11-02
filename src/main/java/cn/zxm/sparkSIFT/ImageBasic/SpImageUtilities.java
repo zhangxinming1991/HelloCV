@@ -22,15 +22,15 @@ public class SpImageUtilities {
      *             if the stream cannot be read
      */
     public static SpFImage readF(final InputStream input) throws IOException {
-        try{
-            return SpImageUtilities.createFImage(SpExtendedImageIO.read(input));
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+//        try{
+//            return SpImageUtilities.createFImage(SpExtendedImageIO.read(input));
+//        }
+//        catch (Exception e) {
+//            e.printStackTrace();
+//            return null;
+//        }
 
-        //return SpImageUtilities.createFImage(SpExtendedImageIO.read(input));
+        return SpImageUtilities.createFImage(SpExtendedImageIO.read(input));
     }
 
     /**
