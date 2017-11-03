@@ -1,7 +1,7 @@
 package cn.zxm.scala.sparkImageDeal
 
 import java.io._
-import java.net.{URI}
+import java.net.URI
 
 import org.apache.spark.imageLib.ImageBasic.SpImageUtilities
 import org.apache.spark.imageLib.SIFT.SpDoGSIFTEngine
@@ -12,7 +12,7 @@ import org.apache.hadoop.mapred.SequenceFileOutputFormat
 import org.apache.spark.{SparkConf, SparkContext}
 import org.openimaj.io.IOUtils
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by root on 17-2-13.
@@ -40,7 +40,7 @@ object ImagesFeatureEx {
 
     val hdfsHt = "hdfs://hadoop0:9000"   //主机名
 
-    val imgsqdir = "/user/root/img_sq/"
+    val imgsqdir = "/user/root/imgSq/"
     val kpslibdir = "/user/root/featureSq/"
 
     val imageSEQ_path = hdfsHt + imgsqdir + dataset + "/*"
@@ -50,9 +50,9 @@ object ImagesFeatureEx {
     rm_hdfs(hdfsHt,kpslibdir + dataset)
 
     //读取hdfs中图像的序列化文件
-    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).persist().map({case (fname,fcontext) => Try{
+    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map(f => {
 
-      var datainput:InputStream = new ByteArrayInputStream(fcontext.getBytes)
+      var datainput:InputStream = new ByteArrayInputStream(f._2.getBytes)
       var img = SpImageUtilities.readF(datainput)//读取图片的像素矩阵
 
       var engine = new SpDoGSIFTEngine()//构建高斯差分金子塔
@@ -61,9 +61,9 @@ object ImagesFeatureEx {
       val baos: ByteArrayOutputStream =new ByteArrayOutputStream()
       IOUtils.writeBinary(baos, kps)//将提取到的特征点转化成二进制模式
 
-      (new Text(fname.toString),new BytesWritable(baos.toByteArray))//以序列化的方式保存提取到的图片的特征点集合
+      (new Text(f._1.toString),new BytesWritable(baos.toByteArray))//以序列化的方式保存提取到的图片的特征点集合
 
-    }}).filter(x => x.isSuccess).map(x => x.get).saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
+    }).persist().saveAsHadoopFile(kpslib_path,classOf[Text],classOf[BytesWritable],classOf[SequenceFileOutputFormat[Text,BytesWritable]])
     /*提取图片集合的特征点,建立特征库*/
 
     sc.stop()

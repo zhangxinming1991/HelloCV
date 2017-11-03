@@ -7,6 +7,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark._
 
 /**
+  * ImageRmFile:删除非法格式的图片
   * Created by root on 17-5-29.
   */
 object ImageRmFile {

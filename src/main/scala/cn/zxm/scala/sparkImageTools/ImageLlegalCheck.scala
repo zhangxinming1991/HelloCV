@@ -9,6 +9,7 @@ import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark._
 
 /**
+  * ImageLlegalCheck:图片格式合法性判断
   * Created by root on 17-5-29.
   */
 object ImageLlegalCheck {

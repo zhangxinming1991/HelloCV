@@ -46,7 +46,7 @@ object ImagesSequence {
 
     val prefix_path_hdfs = "hdfs://hadoop0:9000/user/root/imgdataset/" //用于提取特征的key
 
-    val path = "/user/root/img_sq/" + dataset + "/"
+    val path = "/user/root/imgSq/" + dataset + "/"
     val tmpImageSEQ_path: String = hdfsHt + path
 
     rm_hdfs(hdfsHt,path)
