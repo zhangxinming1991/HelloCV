@@ -50,7 +50,7 @@ object ImagesFeatureEx {
     rm_hdfs(hdfsHt,kpslibdir + dataset)
 
     //读取hdfs中图像的序列化文件
-    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map(f => {
+    val fn_rdd = sc.sequenceFile(imageSEQ_path,classOf[Text],classOf[BytesWritable],task_size.toInt).map(f => {//不能在此处使用persist,否则会出现两个相同的key
 
       var datainput:InputStream = new ByteArrayInputStream(f._2.getBytes)
       var img = SpImageUtilities.readF(datainput)//读取图片的像素矩阵
